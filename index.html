@@ -151,6 +151,27 @@
                     padding: 8px 10px; background: var(--bg);
                     border: 1px solid var(--border); color: var(--text);
                     -webkit-appearance: none; border-radius: 0; }
+    #qa-hint { font-family: 'DM Mono', monospace; font-size: 0.72em;
+               color: var(--text-dim); padding: 4px 2px 0; min-height: 1.2em;
+               white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #qa-hint .hl { color: var(--accent); }
+    .heatmap-wrap { overflow-x: auto; padding: 10px 2px 6px;
+                    -webkit-overflow-scrolling: touch; }
+    #heatmap { display: grid; grid-auto-flow: column;
+               grid-template-rows: repeat(7, 13px); grid-auto-columns: 13px;
+               gap: 3px; width: max-content; }
+    #heatmap-months { display: grid; grid-auto-flow: column;
+                      grid-auto-columns: 16px; height: 14px; width: max-content;
+                      font-family: 'DM Mono', monospace; font-size: 9px;
+                      color: var(--text-dim); margin-bottom: 4px; }
+    #heatmap-months span { overflow: visible; white-space: nowrap; }
+    .hm-cell { width: 13px; height: 13px; border-radius: 2px;
+               background: rgba(255, 255, 255, 0.05); }
+    .hm-cell.l1 { background: rgba(199, 244, 100, 0.25); }
+    .hm-cell.l2 { background: rgba(199, 244, 100, 0.5); }
+    .hm-cell.l3 { background: rgba(199, 244, 100, 0.75); }
+    .hm-cell.l4 { background: rgba(199, 244, 100, 1); }
+    .hm-cell.cardio-only { background: rgba(154, 134, 253, 0.55); }
     .ex-unmapped-box { background: rgba(255, 92, 64, 0.06);
                        border: 1px solid #ff5c40; padding: 12px 14px;
                        margin-bottom: 14px; }
@@ -349,6 +370,7 @@
         <label>Date <input type="date" id="qa-date"></label>
       </div>
       <textarea id="qa-text" rows="6" placeholder="Bench: 4&#10;225x8, 225x8, 225x7, 225x6&#10;Side lateral: 3&#10;14, 13, 12"></textarea>
+      <div id="qa-hint"></div>
       <div class="controls">
         <button id="qa-save">Save workout</button>
         <span class="status-msg" id="qa-status"></span>
@@ -402,6 +424,12 @@
     </section>
 
     <section>
+      <h2>Consistency</h2>
+      <div class="heatmap-wrap" id="heatmap-wrap">
+        <div id="heatmap-months"></div>
+        <div id="heatmap"></div>
+      </div>
+
       <h2>Strength Progression</h2>
       <div class="pr-callout" id="pr-callout"></div>
       <select id="exercise-select"></select>
@@ -450,6 +478,7 @@
         <div class="ex-panel">
           <div id="ex-unmapped"></div>
           <div id="ex-list"></div>
+          <div id="ex-merged"></div>
           <div class="ex-add">
             <div class="ex-add-title">Add exercise</div>
             <input type="text" id="ex-new-name" placeholder="Name (e.g. Hip thrust)">
@@ -711,7 +740,7 @@ function _substringFallback(candidate) {
 // Persisted to localStorage (and synced to gist). Shape:
 //   { exercises: { canonical: { name, variants: [...], muscles: [...] } },
 //     muscle_overrides: { builtin_canonical: ["chest", ...] } }
-let USER_CONFIG = { exercises: {}, muscle_overrides: {}, cardio: [] };
+let USER_CONFIG = { exercises: {}, muscle_overrides: {}, cardio: [], merges: {} };
 let CUSTOM_VARIANT_MAP = {};  // normalized variant string → canonical
 
 function rebuildCustomVariantMap() {
@@ -735,10 +764,31 @@ function musclesFor(canonical) {
 function allCanonicals() {
   const keys = new Set(Object.keys(MUSCLE_GROUPS));
   for (const k in USER_CONFIG.exercises) keys.add(k);
+  // Merged-away exercises no longer exist as their own entry
+  for (const k in (USER_CONFIG.merges || {})) keys.delete(k);
   return Array.from(keys).sort();
 }
 
+// Follow user-defined merges (e.g. pallof_press → cable_pallof) to the final
+// canonical. Bounded depth prevents cycles; a merge pointing at an exercise
+// that no longer exists is ignored.
+function _resolveMerge(canonical) {
+  if (canonical === null) return null;
+  let c = canonical;
+  for (let depth = 0; depth < 5; depth++) {
+    const next = (USER_CONFIG.merges || {})[c];
+    if (!next) break;
+    if (!MUSCLE_GROUPS[next] && !USER_CONFIG.exercises[next]) break;
+    c = next;
+  }
+  return c;
+}
+
 function normalize(rawName) {
+  return _resolveMerge(_normalizeBase(rawName));
+}
+
+function _normalizeBase(rawName) {
   const norm = _basicNormalize(rawName);
 
   // (0) user-defined exercises take priority
@@ -1541,6 +1591,7 @@ function volumeStatusColor(v) {
 function renderDashboard(data) {
   document.getElementById("dashboard").style.display = "";
   document.getElementById("empty-state").style.display = "none";
+  renderHeatmap();
 
   const st = data.stats;
   document.getElementById("subtitle").textContent =
@@ -1967,7 +2018,7 @@ function sanitizeMuscles(arr) {
 // from the fixed set, all strings coerced. Prevents tampered config from
 // injecting markup into the DOM.
 function sanitizeConfig(raw) {
-  const out = { exercises: {}, muscle_overrides: {}, cardio: [] };
+  const out = { exercises: {}, muscle_overrides: {}, cardio: [], merges: {} };
   const ex = (raw && raw.exercises) || {};
   for (const k in ex) {
     out.exercises[k] = {
@@ -1985,6 +2036,11 @@ function sanitizeConfig(raw) {
     out.cardio = raw.cardio
       .map(function(c) { return String(c).toLowerCase().trim().replace(/[^a-z ]/g, ""); })
       .filter(Boolean);
+  }
+  const mg = (raw && raw.merges) || {};
+  for (const k in mg) {
+    const from = String(k), to = String(mg[k]);
+    if (from && to && from !== to) out.merges[from] = to;
   }
   return out;
 }
@@ -2294,6 +2350,7 @@ function renderExerciseManager() {
   const listEl = document.getElementById("ex-list");
   if (!listEl) return;
   const unmappedCount = renderUnmapped();
+  renderMergedList();
   const keys = allCanonicals();
   document.getElementById("ex-count").textContent = keys.length + " exercises" +
     (unmappedCount ? " · " + unmappedCount + " unmapped" : "");
@@ -2329,11 +2386,21 @@ function renderExerciseManager() {
       if (ed.style.display !== "none") { ed.style.display = "none"; return; }
       const isCustom = !!USER_CONFIG.exercises[k];
       const ek = escapeHtml(k);
+      const mergeOptions = allCanonicals().filter(function(c) { return c !== k; })
+        .map(function(c) {
+          return '<option value="' + escapeHtml(c) + '">' +
+            escapeHtml(c.replace(/_/g, " ")) + '</option>';
+        }).join("");
       ed.innerHTML =
         '<div class="ex-muscle-picks">' + musclePickerHtml("edit-" + ek, musclesFor(k)) + '</div>' +
         '<div class="controls">' +
         '<button class="ex-edit-btn" data-save="' + ek + '">save</button>' +
         (isCustom ? '<button class="ex-edit-btn" data-del="' + ek + '">delete</button>' : '') +
+        '</div>' +
+        '<div class="controls ex-merge-row">' +
+        '<select data-merge-target><option value="">merge into…</option>' + mergeOptions + '</select>' +
+        '<button class="ex-edit-btn" data-merge="' + ek + '">merge</button>' +
+        '<span class="status-msg"></span>' +
         '</div>';
       ed.style.display = "";
       wireCheckboxHighlight(ed);
@@ -2352,6 +2419,88 @@ function renderExerciseManager() {
         delete USER_CONFIG.exercises[k];
         saveConfig();
       });
+      ed.querySelector("[data-merge]").addEventListener("click", function() {
+        const target = ed.querySelector("[data-merge-target]").value;
+        const st = ed.querySelector(".ex-merge-row .status-msg");
+        if (!target) { st.textContent = "pick a target"; st.className = "status-msg err"; return; }
+        if (_resolveMerge(target) === k) {
+          st.textContent = "that would create a loop"; st.className = "status-msg err"; return;
+        }
+        USER_CONFIG.merges[k] = target;
+        saveConfig();  // re-parses: all history of k now counts as target
+      });
+    });
+  });
+}
+
+const MONTH_ABBR = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function renderHeatmap() {
+  const grid = document.getElementById("heatmap");
+  const monthsEl = document.getElementById("heatmap-months");
+  if (!grid || !cachedResult || cachedResult.days.length === 0) return;
+
+  const byDay = {};  // epochDay → {sets, cardio, iso}
+  let minE = Infinity, maxE = -Infinity;
+  for (const wd of cachedResult.days) {
+    let sets = 0;
+    for (const l of wd.lifts) sets += l.declared_sets;
+    byDay[wd.day.epochDay] = { sets: sets, cardio: wd.cardio.length > 0, iso: wd.day.iso };
+    if (wd.day.epochDay < minE) minE = wd.day.epochDay;
+    if (wd.day.epochDay > maxE) maxE = wd.day.epochDay;
+  }
+  // Start on the Monday on/before the first day. Mon=0: (epochDay+3)%7.
+  const startMon = minE - ((minE + 3) % 7);
+
+  const cells = [];
+  const monthLabels = [];
+  let prevMonth = -1;
+  for (let e = startMon; e <= maxE; e++) {
+    const dt = dateFromEpochDay(e);
+    if ((e + 3) % 7 === 0) {  // new column (Monday) — month label slot
+      monthLabels.push(dt.m !== prevMonth ? MONTH_ABBR[dt.m] : "");
+      prevMonth = dt.m;
+    }
+    const info = byDay[e];
+    let cls = "hm-cell", title = MONTH_ABBR[dt.m] + " " + dt.d + ", " + dt.y;
+    if (e < minE) { cls += ""; title = ""; }
+    else if (info) {
+      if (info.sets === 0 && info.cardio) { cls += " cardio-only"; title += " — cardio"; }
+      else if (info.sets >= 30) cls += " l4";
+      else if (info.sets >= 20) cls += " l3";
+      else if (info.sets >= 10) cls += " l2";
+      else if (info.sets >= 1) cls += " l1";
+      if (info.sets > 0) title += " — " + info.sets + " sets" + (info.cardio ? " + cardio" : "");
+    }
+    cells.push('<div class="' + cls + '"' + (title ? ' title="' + title + '"' : '') + '></div>');
+  }
+  grid.innerHTML = cells.join("");
+  monthsEl.innerHTML = monthLabels.map(function(m) { return "<span>" + m + "</span>"; }).join("");
+  // Scroll to the most recent weeks
+  const wrap = document.getElementById("heatmap-wrap");
+  wrap.scrollLeft = wrap.scrollWidth;
+}
+
+function renderMergedList() {
+  const el = document.getElementById("ex-merged");
+  if (!el) return;
+  const merges = USER_CONFIG.merges || {};
+  const pairs = Object.keys(merges).sort();
+  if (pairs.length === 0) { el.innerHTML = ""; return; }
+  el.innerHTML =
+    '<div class="ex-add"><div class="ex-add-title">Merged exercises</div>' +
+    pairs.map(function(from) {
+      return '<div class="ex-row">' +
+        '<span class="ex-name">' + escapeHtml(from.replace(/_/g, " ")) +
+        ' → ' + escapeHtml(merges[from].replace(/_/g, " ")) + '</span>' +
+        '<button class="ex-edit-btn" data-unmerge="' + escapeHtml(from) + '">un-merge</button>' +
+        '</div>';
+    }).join("") + '</div>';
+  el.querySelectorAll("[data-unmerge]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      delete USER_CONFIG.merges[btn.getAttribute("data-unmerge")];
+      saveConfig();
     });
   });
 }
@@ -2486,6 +2635,52 @@ function addExercise() {
     markDirtyAndSync();
   });
   document.getElementById("clear-btn").addEventListener("click", clearData);
+
+  // Last-time hint: as you type an exercise in quick-add, show what you
+  // lifted last time. Plain text only (textContent), shows nothing on
+  // no-match — silent and unobtrusive by design.
+  const qaText = document.getElementById("qa-text");
+  const qaHint = document.getElementById("qa-hint");
+  let qaHintTimer = null;
+
+  function fmtSetShort(s) {
+    if (s.weight === null) return s.reps + " reps";
+    const w = s.weight % 1 === 0 ? s.weight.toFixed(0) : s.weight.toFixed(1);
+    const u = s.unit === "kg" ? "kg" : "";
+    return w + u + "×" + (s.reps === null ? "?" : s.reps);
+  }
+
+  function updateQaHint() {
+    qaHint.textContent = "";
+    if (!cachedResult || cachedResult.days.length === 0) return;
+    // Current line at the cursor
+    const pos = qaText.selectionStart != null ? qaText.selectionStart : qaText.value.length;
+    const before = qaText.value.slice(0, pos);
+    const after = qaText.value.slice(pos);
+    const nl = after.indexOf("\n");
+    const line = (before.slice(before.lastIndexOf("\n") + 1) +
+                  (nl === -1 ? after : after.slice(0, nl))).trim();
+    const name = line.split(":")[0].trim();
+    if (name.length < 3 || !/[A-Za-z]{3}/.test(name)) return;
+    const canonical = normalize(name);
+    if (!canonical) return;
+    for (let i = cachedResult.days.length - 1; i >= 0; i--) {
+      const wd = cachedResult.days[i];
+      for (const l of wd.lifts) {
+        if (l.canonical_name !== canonical) continue;
+        const what = l.details.length > 0
+          ? l.details.map(fmtSetShort).join(", ")
+          : l.declared_sets + " sets";
+        qaHint.textContent = "last " + canonical.replace(/_/g, " ") + " · " +
+          MONTH_ABBR[wd.day.m] + " " + wd.day.d + ": " + what;
+        return;
+      }
+    }
+  }
+  qaText.addEventListener("input", function() {
+    if (qaHintTimer) clearTimeout(qaHintTimer);
+    qaHintTimer = setTimeout(updateQaHint, 150);
+  });
 
   // Quick-add: default date = today
   const qaDate = document.getElementById("qa-date");
