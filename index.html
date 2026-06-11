@@ -1725,9 +1725,9 @@ function renderDashboard(data) {
     const ys = fullMonths.map(mo => mo.sets_by_muscle[m] || 0);
     const last = ys.length ? ys[ys.length - 1] : 0;
     return `<div class="spark-cell" style="--mc:${col}">` +
-           `<div class="spark-head"><span class="s-name">${m.replace(/_/g, " ")}</span>` +
+           `<div class="spark-head"><span class="s-name">${escapeHtml(m.replace(/_/g, " "))}</span>` +
            `<span class="s-last">${last}</span></div>` +
-           `<div class="spark" id="spark-${m}"></div></div>`;
+           `<div class="spark" id="spark-${escapeHtml(m)}"></div></div>`;
   }).join("");
   sparkMuscles.forEach(m => {
     const col = MUSCLE_COLORS[m] || "#7a8591";
