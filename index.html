@@ -1387,7 +1387,10 @@ function computeStats(result, windowDays) {
   const windowResult = { days: windowDaysIn, warnings: [] };
 
   const weeks = aggregateVolume(windowResult);
-  const nWeeks = weeks.length;
+  // Only weeks with at least one lifted set count toward averages —
+  // a cardio-only week shouldn't drag down sets/week or days/week.
+  const liftWeeks = weeks.filter(w => w.total_sets > 0);
+  const nWeeks = Math.max(1, liftWeeks.length);
 
   const windowTotalSets = weeks.reduce((s, w) => s + w.total_sets, 0);
   const avgSetsPerWeek = windowTotalSets / nWeeks;
