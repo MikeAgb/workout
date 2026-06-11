@@ -1,0 +1,2534 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TRAINING LOG</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=DM+Mono:wght@400;500&family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0e11;
+      --surface: #14181d;
+      --surface-2: #1c2128;
+      --border: #2a3139;
+      --text: #e4e8ed;
+      --text-dim: #7a8591;
+      --accent: #c7f464;
+      --accent-dim: #8fa848;
+      --warn: #f4b400;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Manrope', sans-serif;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 40px 40px 80px;
+      color: var(--text);
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 20% -10%, rgba(199,244,100,0.04), transparent 40%),
+        radial-gradient(circle at 90% 10%, rgba(199,244,100,0.02), transparent 50%);
+      letter-spacing: -0.01em;
+    }
+    @media (max-width: 600px) {
+      body { padding: 20px 12px 60px; }
+      h1 { font-size: 2.4em !important; }
+    }
+
+    /* --- Header --- */
+    header { margin-bottom: 48px; border-bottom: 1px solid var(--border);
+             padding-bottom: 24px; animation: slideDown 0.4s ease-out; }
+    h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
+         font-size: 3.2em; margin: 0; letter-spacing: 0.02em;
+         text-transform: uppercase; line-height: 0.9; }
+    h1 .accent { color: var(--accent); }
+    .subtitle { font-family: 'DM Mono', monospace; color: var(--text-dim);
+                margin: 12px 0 0; font-size: 0.9em; letter-spacing: 0.03em; }
+
+    /* --- Section headers --- */
+    h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 600;
+         font-size: 1.4em; margin: 3em 0 1em; letter-spacing: 0.08em;
+         text-transform: uppercase; color: var(--text-dim);
+         display: flex; align-items: center; gap: 16px; }
+    h2::before { content: ''; width: 4px; height: 20px;
+                 background: var(--accent); }
+    h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    h2 .h2-meta { font-family: 'DM Mono', monospace; font-size: 0.65em;
+                  font-weight: 400; color: var(--text-dim);
+                  letter-spacing: 0.05em; text-transform: none; }
+
+    /* --- Tool panels (collapsible: log workout / full log / sync) --- */
+    .tool-panel { background: var(--surface); border: 1px solid var(--border);
+                  margin-bottom: 12px; }
+    .tool-panel > summary { padding: 14px 18px; cursor: pointer;
+                            font-family: 'DM Mono', monospace; font-size: 0.85em;
+                            color: var(--text); letter-spacing: 0.05em;
+                            list-style: none; user-select: none; }
+    .tool-panel > summary::-webkit-details-marker { display: none; }
+    .tool-panel > summary::before { content: '\25B8  '; color: var(--accent); }
+    .tool-panel[open] > summary::before { content: '\25BE  '; }
+    .tool-panel .panel { padding: 0 18px 18px; }
+    .tool-panel textarea { width: 100%; min-height: 140px; resize: vertical;
+                           font-family: 'DM Mono', monospace; font-size: 16px;
+                           background: var(--bg); color: var(--text);
+                           border: 2px solid var(--border); padding: 12px;
+                           line-height: 1.5; -webkit-appearance: none;
+                           border-radius: 0; }
+    .tool-panel #log-text { min-height: 200px; }
+    .tool-panel textarea:focus { outline: none; border-color: var(--accent); }
+    .tool-panel .char-count { font-family: 'DM Mono', monospace; font-size: 0.75em;
+                              color: var(--text-dim); margin: 8px 0 12px; }
+    .tool-panel .char-count.has-content { color: var(--accent); }
+    .tool-panel .controls { display: flex; gap: 12px; align-items: center;
+                            flex-wrap: wrap; margin: 10px 0; }
+    .tool-panel label { font-family: 'DM Mono', monospace; font-size: 0.75em;
+                        color: var(--text-dim); letter-spacing: 0.08em;
+                        text-transform: uppercase; }
+    .tool-panel input[type=number] { font-family: 'DM Mono', monospace;
+                                     font-size: 16px;
+                                     padding: 8px 10px; background: var(--bg);
+                                     border: 1px solid var(--border);
+                                     color: var(--text); width: 90px;
+                                     -webkit-appearance: none; border-radius: 0; }
+    .tool-panel input[type=date], .tool-panel input[type=text],
+    .tool-panel input[type=password] {
+                                     font-family: 'DM Mono', monospace;
+                                     font-size: 16px;
+                                     padding: 8px 10px; background: var(--bg);
+                                     border: 1px solid var(--border);
+                                     color: var(--text);
+                                     -webkit-appearance: none; border-radius: 0; }
+    .tool-panel input[type=text], .tool-panel input[type=password] { min-width: 220px; }
+    .tool-panel button, .ex-add button { font-family: 'DM Mono', monospace; font-size: 0.85em;
+                         padding: 12px 24px; background: var(--accent);
+                         color: var(--bg); border: none; cursor: pointer;
+                         letter-spacing: 0.08em; text-transform: uppercase;
+                         font-weight: 500; -webkit-appearance: none;
+                         border-radius: 0; }
+    .tool-panel button:active, .ex-add button:active { background: var(--accent-dim); }
+    .tool-panel button.secondary { background: var(--surface-2);
+                                   color: var(--text-dim); }
+    .tool-panel button.secondary:active { background: var(--border); }
+    .tool-panel .hint { font-family: 'DM Mono', monospace; font-size: 0.75em;
+                        color: var(--text-dim); line-height: 1.6; margin: 10px 0; }
+    .status-msg { font-family: 'DM Mono', monospace; font-size: 0.75em;
+                  color: var(--accent); }
+    .status-msg.err { color: #ff5c40; }
+    .reopen-input { display: none; }
+
+    /* --- Exercise manager --- */
+    .ex-panel { padding: 12px 18px 18px; }
+    .ex-row { display: flex; align-items: center; gap: 10px; padding: 10px 0;
+              border-bottom: 1px solid var(--border); flex-wrap: wrap;
+              font-family: 'DM Mono', monospace; font-size: 0.85em; }
+    .ex-row .ex-name { min-width: 180px; color: var(--text); cursor: pointer; }
+    .ex-row .ex-name.custom::after { content: ' \2605'; color: var(--accent); }
+    .ex-row .ex-muscles { color: var(--text-dim); font-size: 0.85em; flex: 1; }
+    .ex-row .ex-edit-btn { background: var(--surface-2); color: var(--text-dim);
+                           border: 1px solid var(--border); padding: 6px 12px;
+                           font-family: 'DM Mono', monospace; font-size: 0.8em;
+                           cursor: pointer; border-radius: 0; }
+    .ex-editor { width: 100%; padding: 10px 0 4px; }
+    .ex-muscle-picks { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .ex-muscle-picks label { display: inline-flex; align-items: center; gap: 4px;
+                             font-family: 'DM Mono', monospace; font-size: 0.75em;
+                             color: var(--text-dim); background: var(--bg);
+                             border: 1px solid var(--border); padding: 6px 10px;
+                             cursor: pointer; text-transform: none; }
+    .ex-muscle-picks label.checked { border-color: var(--accent); color: var(--accent); }
+    .ex-muscle-picks input { accent-color: var(--accent); }
+    .ex-add { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .ex-add-title { font-family: 'DM Mono', monospace; font-size: 0.8em;
+                    color: var(--text-dim); text-transform: uppercase;
+                    letter-spacing: 0.08em; margin-bottom: 10px; }
+    .ex-add input[type=text] { display: block; width: 100%; margin: 8px 0;
+                    font-family: 'DM Mono', monospace; font-size: 16px;
+                    padding: 8px 10px; background: var(--bg);
+                    border: 1px solid var(--border); color: var(--text);
+                    -webkit-appearance: none; border-radius: 0; }
+    .ex-unmapped-box { background: rgba(255, 92, 64, 0.06);
+                       border: 1px solid #ff5c40; padding: 12px 14px;
+                       margin-bottom: 14px; }
+    .ex-unmapped-title { font-family: 'DM Mono', monospace; font-size: 0.8em;
+                         color: #ff5c40; text-transform: uppercase;
+                         letter-spacing: 0.08em; margin-bottom: 8px; }
+    .ex-unmapped-box .ex-row { border-bottom: 1px solid rgba(255,92,64,0.25); }
+    .cardio-chip { display: inline-flex; align-items: center; gap: 6px;
+                   font-family: 'DM Mono', monospace; font-size: 0.75em;
+                   background: var(--bg); border: 1px solid var(--border);
+                   padding: 6px 10px; margin: 3px; color: var(--text-dim); }
+    .cardio-chip.custom { border-color: var(--accent); color: var(--text); }
+    .cardio-chip button { background: none; border: none; color: #ff5c40;
+                          cursor: pointer; padding: 0 2px; font-size: 1em;
+                          font-family: inherit; }
+
+    /* --- Window slider --- */
+    .window-slider { margin: 12px 0 16px; }
+    .window-slider label { font-family: 'DM Mono', monospace; font-size: 0.75em;
+                           color: var(--text-dim); text-transform: uppercase;
+                           letter-spacing: 0.08em; display: flex;
+                           align-items: center; gap: 12px; flex-wrap: wrap; }
+    .window-slider input[type=range] { flex: 1; min-width: 150px; max-width: 400px;
+                                       -webkit-appearance: none; height: 4px;
+                                       background: var(--border); outline: none; }
+    .window-slider input[type=range]::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 18px; height: 18px;
+        background: var(--accent); cursor: pointer; border-radius: 0; }
+    .window-slider #window-slider-val { color: var(--accent); font-weight: 500;
+                                        min-width: 70px; }
+
+    /* --- Summary cards --- */
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+             gap: 1px; background: var(--border); border: 1px solid var(--border);
+             margin: 20px 0; }
+    .card { background: var(--surface); padding: 20px 24px;
+            transition: background 0.15s ease; }
+    .card:hover { background: var(--surface-2); }
+    .card .label { font-family: 'DM Mono', monospace; font-size: 0.7em;
+                   color: var(--text-dim); text-transform: uppercase;
+                   letter-spacing: 0.12em; }
+    .card .value { font-family: 'Barlow Condensed', sans-serif; font-weight: 800;
+                   font-size: 2.4em; margin-top: 8px; color: var(--text);
+                   line-height: 1; letter-spacing: 0.01em;
+                   font-variant-numeric: tabular-nums; }
+    .card.hero .value { color: var(--accent); }
+
+    /* --- Muscle chips (mini bar-charts) --- */
+    .muscle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                   gap: 10px; margin-top: 16px; }
+    .muscle-chip { position: relative; background: var(--surface);
+                   border: 1px solid var(--border);
+                   border-left: 4px solid var(--mc, var(--border));
+                   padding: 14px 16px 10px; overflow: hidden;
+                   transition: transform 0.15s ease, border-color 0.15s ease;
+                   animation: fadeIn 0.5s ease-out backwards;
+                   animation-delay: calc(var(--i, 0) * 60ms); }
+    .muscle-chip:hover { transform: translateX(4px); }
+    .muscle-chip::after { content: ''; position: absolute; inset: 0 auto 0 0;
+                          width: var(--fill, 0%); background: var(--mc, var(--accent));
+                          opacity: 0.12; pointer-events: none; }
+    .muscle-chip .m-name { position: relative; font-family: 'DM Mono', monospace;
+                           font-size: 0.7em; color: var(--text-dim);
+                           text-transform: uppercase; letter-spacing: 0.1em; }
+    .muscle-chip .m-val { position: relative; font-family: 'Barlow Condensed', sans-serif;
+                          font-weight: 800; font-size: 2.2em; line-height: 1;
+                          margin-top: 6px; text-align: right;
+                          font-variant-numeric: tabular-nums; }
+    .muscle-chip .m-val .unit { font-size: 0.4em; color: var(--text-dim);
+                                font-family: 'DM Mono', monospace;
+                                font-weight: 400; margin-left: 4px; }
+
+    /* --- PR callout --- */
+    .pr-callout { display: flex; align-items: baseline; gap: 20px;
+                  margin: 4px 0 12px; flex-wrap: wrap; }
+    .pr-callout .pr-ex { font-family: 'DM Mono', monospace; font-size: 0.85em;
+                         color: var(--text-dim); text-transform: uppercase;
+                         letter-spacing: 0.08em; }
+    .pr-callout .pr-val { font-family: 'Barlow Condensed', sans-serif;
+                          font-weight: 800; font-size: 3.2em; line-height: 1;
+                          color: var(--text); font-variant-numeric: tabular-nums; }
+    .pr-callout .pr-val .pr-unit { font-size: 0.4em; color: var(--text-dim);
+                                   font-family: 'DM Mono', monospace;
+                                   font-weight: 400; margin-left: 6px; }
+    .pr-callout .pr-delta { font-family: 'Barlow Condensed', sans-serif;
+                            font-weight: 800; font-size: 1.4em;
+                            color: var(--accent);
+                            font-variant-numeric: tabular-nums; }
+    .pr-callout .pr-delta.neg { color: #ff6b6b; }
+
+    /* --- Sparkline grid --- */
+    .spark-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                  gap: 1px; background: var(--border); border: 1px solid var(--border);
+                  margin: 12px 0; }
+    .spark-cell { background: var(--surface); padding: 12px 14px 8px;
+                  border-left: 3px solid var(--mc, var(--border)); }
+    .spark-head { display: flex; justify-content: space-between;
+                  align-items: baseline; }
+    .spark-head .s-name { font-family: 'DM Mono', monospace; font-size: 0.7em;
+                          color: var(--text-dim); text-transform: uppercase;
+                          letter-spacing: 0.08em; }
+    .spark-head .s-last { font-family: 'Barlow Condensed', sans-serif;
+                          font-weight: 800; font-size: 1.4em;
+                          color: var(--text);
+                          font-variant-numeric: tabular-nums; }
+    .spark-cell .spark { height: 70px; margin-top: 6px; }
+    .spark-note { font-family: 'DM Mono', monospace; font-size: 0.75em;
+                  color: var(--text-dim); margin: 8px 0 0; }
+
+    /* --- Charts --- */
+    .chart { background: var(--surface); border: 1px solid var(--border);
+             padding: 8px; margin: 12px 0;
+             animation: fadeIn 0.5s ease-out;
+             animation-fill-mode: backwards; }
+    .chart-tall  { height: 480px; }
+    .chart-med   { height: 380px; }
+    .chart-short { height: 260px; }
+    section:nth-of-type(1) .chart { animation-delay: 0.00s; }
+    section:nth-of-type(2) .chart { animation-delay: 0.12s; }
+    section:nth-of-type(3) .chart { animation-delay: 0.24s; }
+    section:nth-of-type(4) .chart { animation-delay: 0.36s; }
+    section:nth-of-type(5) .chart { animation-delay: 0.48s; }
+    section:nth-of-type(6) .chart { animation-delay: 0.60s; }
+    section:nth-of-type(7) .chart { animation-delay: 0.72s; }
+    .cards .card { animation: fadeIn 0.5s ease-out backwards;
+                   animation-delay: calc(var(--i, 0) * 60ms); }
+
+    /* --- Controls --- */
+    select { font-family: 'DM Mono', monospace; font-size: 0.9em;
+             padding: 10px 14px; border: 1px solid var(--border);
+             background: var(--surface-2); color: var(--text);
+             letter-spacing: 0.05em; cursor: pointer;
+             transition: border-color 0.15s ease; }
+    select:hover, select:focus { border-color: var(--accent); outline: none; }
+
+    /* --- Warnings --- */
+    /* --- Workout log viewer (collapsible, nested by month) --- */
+    details.log-viewer { background: var(--surface); border: 1px solid var(--border);
+                         margin: 12px 0; }
+    details.log-viewer > summary { padding: 14px 18px; cursor: pointer;
+                                   font-family: 'DM Mono', monospace; font-size: 0.85em;
+                                   color: var(--text-dim); letter-spacing: 0.05em;
+                                   list-style: none; user-select: none; }
+    details.log-viewer > summary::-webkit-details-marker { display: none; }
+    details.log-viewer > summary::before { content: '\25B8  '; color: var(--accent); }
+    details.log-viewer[open] > summary::before { content: '\25BE  '; }
+    details.log-viewer .month-count { float: right; color: var(--accent);
+                                      font-variant-numeric: tabular-nums; }
+    details.log-month { border-top: 1px solid var(--border); }
+    details.log-month > summary { padding: 10px 18px; cursor: pointer;
+                                  font-family: 'DM Mono', monospace; font-size: 0.8em;
+                                  color: var(--text); list-style: none; }
+    details.log-month > summary::-webkit-details-marker { display: none; }
+    details.log-month > summary::before { content: '\25B8  '; color: var(--text-dim); }
+    details.log-month[open] > summary::before { content: '\25BE  '; }
+    .log-day { padding: 12px 18px; border-top: 1px solid var(--border);
+               background: var(--bg); font-family: 'DM Mono', monospace;
+               font-size: 0.78em; }
+    .log-day .d-date { color: var(--accent); font-weight: 500;
+                       letter-spacing: 0.05em; margin-bottom: 8px; }
+    .log-day .d-lift { margin: 3px 0; padding-left: 12px; }
+    .log-day .d-lift .l-name { color: var(--text); }
+    .log-day .d-lift .l-sets { color: var(--text-dim); }
+    .log-day .d-lift .l-detail { display: block; padding-left: 16px;
+                                 color: var(--text-dim); font-size: 0.92em; }
+    .log-day .d-cardio { margin: 3px 0; padding-left: 12px; color: #818cf8; }
+    .log-day .d-total { margin-top: 6px; padding-left: 12px;
+                        color: var(--text-dim); font-style: italic; font-size: 0.9em; }
+
+    ul.warnings { background: var(--surface); border: 1px solid var(--border);
+                  border-left: 3px solid var(--warn);
+                  padding: 16px 16px 16px 36px; margin: 8px 0;
+                  list-style-type: square; }
+    ul.warnings li { margin: 6px 0; font-family: 'DM Mono', monospace;
+                     font-size: 0.82em; color: var(--text-dim); }
+    .empty { color: var(--text-dim); font-style: italic; }
+    #empty-state { text-align: center; padding: 60px 20px;
+                   color: var(--text-dim); font-family: 'DM Mono', monospace; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(24px); }
+                        to   { opacity: 1; transform: translateY(0); } }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-12px); }
+                           to   { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TRAINING<span class="accent">LOG</span></h1>
+    <p class="subtitle" id="subtitle">paste your log below to get started</p>
+  </header>
+
+  <details class="tool-panel" id="quick-add">
+    <summary>&#10133; Log workout</summary>
+    <div class="panel">
+      <div class="controls">
+        <label>Date <input type="date" id="qa-date"></label>
+      </div>
+      <textarea id="qa-text" rows="6" placeholder="Bench: 4&#10;225x8, 225x8, 225x7, 225x6&#10;Side lateral: 3&#10;14, 13, 12"></textarea>
+      <div class="controls">
+        <button id="qa-save">Save workout</button>
+        <span class="status-msg" id="qa-status"></span>
+      </div>
+    </div>
+  </details>
+
+  <details class="tool-panel" id="full-log-panel">
+    <summary>&#128221; Full log (paste / edit)</summary>
+    <div class="panel" id="log-details">
+      <textarea id="log-text" placeholder="Tap here, then paste your workout log from Notes"></textarea>
+      <div id="char-count" class="char-count">0 characters</div>
+      <div class="controls">
+        <label>Start year <input type="number" id="year-input" min="2000" max="2100"></label>
+        <button id="render-btn">Render</button>
+        <button id="clear-btn" class="secondary">Clear</button>
+      </div>
+    </div>
+  </details>
+
+  <details class="tool-panel" id="sync-panel">
+    <summary>&#9729;&#65039; Sync <span class="status-msg" id="sync-summary"></span></summary>
+    <div class="panel">
+      <p class="hint">Backs up your log + settings to a <b>private</b> GitHub gist so nothing is lost if browser data is cleared, and syncs across devices. Create a token at github.com/settings/tokens (classic) with ONLY the <b>gist</b> scope.</p>
+      <div class="controls">
+        <label>Token <input type="password" id="sync-token" placeholder="ghp_..."></label>
+      </div>
+      <div class="controls">
+        <label>Gist ID <input type="text" id="sync-gist-id" placeholder="blank = create new"></label>
+      </div>
+      <div class="controls">
+        <button id="sync-connect">Connect</button>
+        <button id="sync-now" class="secondary">Sync now</button>
+        <button id="sync-disconnect" class="secondary">Disconnect</button>
+      </div>
+      <div class="status-msg" id="sync-status"></div>
+    </div>
+  </details>
+
+  <div id="dashboard" style="display:none">
+    <section>
+      <h2>Summary <span class="h2-meta" id="window-label"></span></h2>
+      <div class="window-slider">
+        <label>Averaging window:
+          <input type="range" id="window-slider" min="30" max="365" step="15" value="90">
+          <span id="window-slider-val">90 days</span>
+        </label>
+      </div>
+      <div class="cards" id="summary-cards"></div>
+      <div class="muscle-grid" id="muscle-grid"></div>
+    </section>
+
+    <section>
+      <h2>Strength Progression</h2>
+      <div class="pr-callout" id="pr-callout"></div>
+      <select id="exercise-select"></select>
+      <div class="chart chart-med" id="strength-chart"></div>
+    </section>
+
+    <section>
+      <h2>Weekly Volume</h2>
+      <div class="chart chart-tall" id="weekly-chart"></div>
+    </section>
+
+    <section>
+      <h2>Per-Muscle Volume</h2>
+      <select id="muscle-select"></select>
+      <div class="chart chart-med" id="permuscle-chart"></div>
+    </section>
+
+    <section>
+      <h2>Monthly Rollup</h2>
+      <div class="spark-grid" id="spark-grid"></div>
+      <p class="spark-note" id="spark-note"></p>
+    </section>
+
+    <section>
+      <h2>Training Frequency</h2>
+      <div class="chart chart-short" id="frequency-chart"></div>
+    </section>
+
+    <section>
+      <h2>Cardio</h2>
+      <div class="chart chart-short" id="cardio-chart"></div>
+    </section>
+
+    <section>
+      <h2>Workout Log</h2>
+      <details class="log-viewer" id="log-viewer">
+        <summary>All workouts <span class="month-count" id="log-viewer-count"></span></summary>
+        <div id="log-viewer-body"></div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Exercises</h2>
+      <details class="log-viewer" id="ex-manager">
+        <summary>Manage exercises &amp; muscle groups <span class="month-count" id="ex-count"></span></summary>
+        <div class="ex-panel">
+          <div id="ex-unmapped"></div>
+          <div id="ex-list"></div>
+          <div class="ex-add">
+            <div class="ex-add-title">Add exercise</div>
+            <input type="text" id="ex-new-name" placeholder="Name (e.g. Hip thrust)">
+            <input type="text" id="ex-new-variants" placeholder="Other spellings, comma-separated (optional)">
+            <div class="ex-muscle-picks" id="ex-new-muscles"></div>
+            <div class="controls">
+              <button id="ex-add-btn">Add</button>
+              <span class="status-msg" id="ex-add-status"></span>
+            </div>
+          </div>
+          <div class="ex-add">
+            <div class="ex-add-title">Cardio types</div>
+            <div id="ex-cardio-list"></div>
+            <input type="text" id="ex-new-cardio" placeholder="Add cardio type (e.g. tennis)">
+            <div class="controls">
+              <button id="ex-cardio-add-btn">Add cardio</button>
+              <span class="status-msg" id="ex-cardio-status"></span>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section>
+      <h2>Parse Warnings</h2>
+      <ul class="warnings" id="warnings"></ul>
+    </section>
+  </div>
+
+
+  <div id="empty-state">No data yet — tap the textarea above and paste your log.</div>
+
+<script>
+"use strict";
+
+// ============================================================================
+// PORTED PYTHON BACKEND
+// Direct transliteration of workout_tracker/{normalize,parser,aggregate,monthly,stats}.py
+// Dates are {y, m, d, epochDay, iso} objects. epochDay = days since 1970-01-01 UTC.
+// ============================================================================
+
+// ---- Date helpers --------------------------------------------------------
+
+function mkDate(y, m, d) {
+  // m is 1-12
+  const ts = Date.UTC(y, m - 1, d);
+  return {
+    y: y, m: m, d: d,
+    epochDay: Math.floor(ts / 86400000),
+    iso: y + "-" + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0"),
+  };
+}
+
+function dateFromEpochDay(ed) {
+  const dt = new Date(ed * 86400000);
+  return mkDate(dt.getUTCFullYear(), dt.getUTCMonth() + 1, dt.getUTCDate());
+}
+
+function isoCalendar(dt) {
+  // Returns {year, week} per ISO 8601.
+  const d = new Date(Date.UTC(dt.y, dt.m - 1, dt.d));
+  // Set to nearest Thursday: current date + 4 - dayOfWeek (Mon=1..Sun=7)
+  const dow = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dow);
+  const isoYear = d.getUTCFullYear();
+  const yearStart = Date.UTC(isoYear, 0, 1);
+  const weekNo = Math.ceil(((d.getTime() - yearStart) / 86400000 + 1) / 7);
+  return { year: isoYear, week: weekNo };
+}
+
+function daysInMonth(y, m) {
+  // m is 1-12. Date(y, m, 0) in JS uses 0-indexed month, so month=m, day=0
+  // gives the last day of month (m-1) 0-indexed = month m 1-indexed.
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+// ---- normalize.py --------------------------------------------------------
+
+const MUSCLE_GROUPS = {
+  bench_press:            ["chest", "front_delts"],
+  incline_press:          ["chest", "front_delts"],
+  incline_dumbbell_press: ["chest", "front_delts"],
+  cable_crossover:    ["chest"],
+  chest_fly:          ["chest"],
+  dumbbell_fly:       ["chest"],
+  machine_press:      ["chest"],
+  pushup:             ["chest"],
+  overhead_press:          ["front_delts"],
+  machine_overhead_press:  ["front_delts"],
+  dumbbell_overhead_press: ["front_delts"],
+  side_lateral:         ["side_delts"],
+  machine_side_lateral: ["side_delts"],
+  rear_delt_fly:      ["rear_delts"],
+  pulldown:           ["back", "biceps"],
+  pullup:             ["back", "biceps"],
+  cable_row:          ["back"],
+  dumbbell_row:       ["back"],
+  barbell_row:        ["back"],
+  machine_row:        ["back"],
+  facepull:           ["rear_delts"],
+  preacher_curl:      ["biceps"],
+  dumbbell_curl:      ["biceps"],
+  machine_curl:       ["biceps"],
+  biceps_generic:     ["biceps"],
+  tricep_extension:   ["triceps"],
+  tricep_machine:     ["triceps"],
+  triceps_generic:    ["triceps"],
+  squat:              ["quads", "glutes"],
+  leg_press:          ["quads", "glutes"],
+  leg_extension:      ["quads"],
+  leg_curl:           ["hamstrings"],
+  romanian_deadlift:  ["hamstrings", "glutes"],
+  calves:             ["calves"],
+  abs:                ["abs"],
+};
+
+const CANONICAL_TABLE = {
+  "bench":                    "bench_press",
+  "bench press":              "bench_press",
+  "flat bench press":         "bench_press",
+  "incline":                  "incline_press",
+  "incline press":            "incline_press",
+  "incline pre":              "incline_press",
+  "incline bench":            "incline_press",
+  "incline barbell bench":    "incline_press",
+  "incline bench press":      "incline_press",
+  "inclined bench":           "incline_press",
+  "incline dumbbell press":   "incline_dumbbell_press",
+  "inclined dumbbell press":  "incline_dumbbell_press",
+  "inclined dumbbell":        "incline_dumbbell_press",
+  "cable cross over":         "cable_crossover",
+  "chest fly":                "chest_fly",
+  "dumbbell fly":             "dumbbell_fly",
+  "machine press":            "machine_press",
+  "machine press chest press": "machine_press",
+  "pushup":                   "pushup",
+  "overhead":                 "overhead_press",
+  "overhead press":           "overhead_press",
+  "barbell overhead press":   "overhead_press",
+  "standing overhead press":  "overhead_press",
+  "ohp":                      "overhead_press",
+  "machine overhead press":   "machine_overhead_press",
+  "machine shoulder press":   "machine_overhead_press",
+  "seated dumbbell overhead":       "dumbbell_overhead_press",
+  "dumbbell overhead press":        "dumbbell_overhead_press",
+  "dumbbell shoulder press":        "dumbbell_overhead_press",
+  "seated dumbbell shoulder press": "dumbbell_overhead_press",
+  "shoulder press":           "overhead_press",
+  "side lateral":               "side_lateral",
+  "side lateral raise":         "side_lateral",
+  "dumbbell side lateral":      "side_lateral",
+  "dumbbell lateral raise":     "side_lateral",
+  "lateral raise":              "side_lateral",
+  "side lateral machine":       "machine_side_lateral",
+  "machine side lateral":       "machine_side_lateral",
+  "machine side lateral raise": "machine_side_lateral",
+  "pulldown":                 "pulldown",
+  "pull down":                "pulldown",
+  "pulldown machine":         "pulldown",
+  "pullup":                   "pullup",
+  "pull up":                  "pullup",
+  "cable row":                "cable_row",
+  "dumbbell row":             "dumbbell_row",
+  "barbell row":              "barbell_row",
+  "machine row":              "machine_row",
+  "row":                      "barbell_row",
+  "facepull":                 "facepull",
+  "face pull":                "facepull",
+  "reverse fly":              "rear_delt_fly",
+  "rear delt fly":            "rear_delt_fly",
+  "read delt fly":            "rear_delt_fly",
+  "rear delt":                "rear_delt_fly",
+  "reverse lateral raise":    "rear_delt_fly",
+  "preacher curl":            "preacher_curl",
+  "biceps preacher curl":     "preacher_curl",
+  "dumbbell bicep curl":      "dumbbell_curl",
+  "bicep curl":               "biceps_generic",
+  "standing bicep curl":      "biceps_generic",
+  "machine bicep curl":       "machine_curl",
+  "biceps machine curl":      "machine_curl",
+  "bicep machine":            "machine_curl",
+  "bicep cable machine":      "machine_curl",
+  "bicep":                    "biceps_generic",
+  "triceps":                  "triceps_generic",
+  "tricep":                   "triceps_generic",
+  "triceps extensions cable": "tricep_extension",
+  "triceps extension cable":  "tricep_extension",
+  "triceps cable extension":  "tricep_extension",
+  "tricep cable extension":   "tricep_extension",
+  "tricep machine":           "tricep_machine",
+  "squat":                    "squat",
+  "romanian deadlift":        "romanian_deadlift",
+  "leg press":                "leg_press",
+  "leg extension":            "leg_extension",
+  "leg curl":                 "leg_curl",
+  "calves":                   "calves",
+  "calve":                    "calves",
+  "abs":                      "abs",
+};
+
+// [required-words-array, canonical] — checked in order.
+const FALLBACK_SUBSTRING_RULES = [
+  // Machine-specific before generic so machine variants stay separate
+  [["machine", "side", "lateral"], "machine_side_lateral"],
+  [["side", "lateral"], "side_lateral"],
+  [["tricep"], "tricep_extension"],
+  [["triceps", "cable"], "tricep_extension"],
+  [["triceps", "extension"], "tricep_extension"],
+  [["bicep", "machine"], "machine_curl"],
+  [["biceps", "machine"], "machine_curl"],
+  [["bicep", "curl"], "biceps_generic"],
+  [["pull", "down"], "pulldown"],
+  [["overhead", "press"], "overhead_press"],
+  [["shoulder", "press"], "overhead_press"],
+];
+
+function _basicNormalize(raw) {
+  let s = raw.toLowerCase().trim();
+  s = s.replace(/-/g, " ");
+  s = s.replace(/\s+/g, " ");
+  // Plural-strip last word: trailing single 's', result >= 3 chars, not 'ss'.
+  const words = s.split(" ");
+  if (words.length > 0) {
+    const last = words[words.length - 1];
+    if (last.endsWith("s") && !last.endsWith("ss") && last.length - 1 >= 3) {
+      words[words.length - 1] = last.slice(0, -1);
+    }
+  }
+  return words.join(" ");
+}
+
+function _stripMachine(normalized) {
+  if (normalized.startsWith("machine ")) {
+    return normalized.slice("machine ".length);
+  }
+  return normalized;
+}
+
+function _sortedWords(s) {
+  return s.split(" ").sort().join(" ");
+}
+
+function _lookup(candidate) {
+  return Object.prototype.hasOwnProperty.call(CANONICAL_TABLE, candidate)
+    ? CANONICAL_TABLE[candidate] : null;
+}
+
+function _substringFallback(candidate) {
+  const words = new Set(candidate.split(" "));
+  for (const [required, canonical] of FALLBACK_SUBSTRING_RULES) {
+    if (required.every(w => words.has(w))) {
+      return canonical;
+    }
+  }
+  return null;
+}
+
+// ---- User config: custom exercises + muscle-group overrides --------------
+// Persisted to localStorage (and synced to gist). Shape:
+//   { exercises: { canonical: { name, variants: [...], muscles: [...] } },
+//     muscle_overrides: { builtin_canonical: ["chest", ...] } }
+let USER_CONFIG = { exercises: {}, muscle_overrides: {}, cardio: [] };
+let CUSTOM_VARIANT_MAP = {};  // normalized variant string → canonical
+
+function rebuildCustomVariantMap() {
+  CUSTOM_VARIANT_MAP = {};
+  for (const key in USER_CONFIG.exercises) {
+    const ex = USER_CONFIG.exercises[key];
+    CUSTOM_VARIANT_MAP[_basicNormalize(ex.name)] = key;
+    for (const v of (ex.variants || [])) {
+      const nv = _basicNormalize(v);
+      if (nv) CUSTOM_VARIANT_MAP[nv] = key;
+    }
+  }
+}
+
+function musclesFor(canonical) {
+  if (USER_CONFIG.muscle_overrides[canonical]) return USER_CONFIG.muscle_overrides[canonical];
+  if (USER_CONFIG.exercises[canonical]) return USER_CONFIG.exercises[canonical].muscles || [];
+  return MUSCLE_GROUPS[canonical] || [];
+}
+
+function allCanonicals() {
+  const keys = new Set(Object.keys(MUSCLE_GROUPS));
+  for (const k in USER_CONFIG.exercises) keys.add(k);
+  return Array.from(keys).sort();
+}
+
+function normalize(rawName) {
+  const norm = _basicNormalize(rawName);
+
+  // (0) user-defined exercises take priority
+  if (Object.prototype.hasOwnProperty.call(CUSTOM_VARIANT_MAP, norm)) {
+    return CUSTOM_VARIANT_MAP[norm];
+  }
+  const strippedEarly = _stripMachine(norm);
+  if (strippedEarly !== norm &&
+      Object.prototype.hasOwnProperty.call(CUSTOM_VARIANT_MAP, strippedEarly)) {
+    return CUSTOM_VARIANT_MAP[strippedEarly];
+  }
+
+  // (a) exact
+  let hit = _lookup(norm);
+  if (hit !== null) return hit;
+
+  // (b) machine-stripped exact
+  const stripped = _stripMachine(norm);
+  if (stripped !== norm) {
+    hit = _lookup(stripped);
+    if (hit !== null) return hit;
+  }
+
+  // (c) sorted-word match
+  hit = _lookup(_sortedWords(norm));
+  if (hit !== null) return hit;
+  if (stripped !== norm) {
+    hit = _lookup(_sortedWords(stripped));
+    if (hit !== null) return hit;
+  }
+
+  // (d) substring fallback — stripped first, then unstripped
+  hit = _substringFallback(stripped);
+  if (hit !== null) return hit;
+  if (stripped !== norm) {
+    hit = _substringFallback(norm);
+    if (hit !== null) return hit;
+  }
+
+  return null;
+}
+
+// ---- parser.py -----------------------------------------------------------
+
+const MONTH_MAP = {
+  jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3,
+  apr: 4, april: 4, may: 5, jun: 6, june: 6, jul: 7, july: 7,
+  aug: 8, august: 8, sep: 9, september: 9, oct: 10, october: 10,
+  nov: 11, november: 11, dec: 12, december: 12,
+};
+
+const _MONTHS = "Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December";
+// Two alternatives; groups 1,2 for colon-variant, groups 4,5 for space-variant.
+const DATE_RE = new RegExp(
+  "^(" + _MONTHS + ")\\s+(\\d{1,2})(st|nd|rd|th)?(?:\\s*:.*)?\\s*$" +
+  "|" +
+  "^(" + _MONTHS + ")\\s+(\\d{1,2})(st|nd|rd|th)?\\s+\\w.*$",
+  "i"
+);
+
+const TOTAL_RE_A = /^(\d+)\s+total$/i;
+const TOTAL_RE_B = /^total\s*:\s*(\d+)$/i;
+
+const CARDIO_WHITELIST = new Set(["sumo", "swim", "bike", "rucking", "run", "walk", "row", "hockey"]);
+const CARDIO_PHRASES = ["stair master", "stairmaster"];
+// User-defined cardio (from USER_CONFIG.cardio) — rebuilt on config load
+let USER_CARDIO_WORDS = new Set();   // single words, e.g. "tennis"
+let USER_CARDIO_PHRASES = [];        // multi-word, e.g. "jump rope"
+
+function rebuildUserCardio() {
+  USER_CARDIO_WORDS = new Set();
+  USER_CARDIO_PHRASES = [];
+  for (const c of (USER_CONFIG.cardio || [])) {
+    if (c.indexOf(" ") !== -1) USER_CARDIO_PHRASES.push(c);
+    else USER_CARDIO_WORDS.add(c);
+  }
+}
+
+const TIMED_CARDIO_RE = /^([A-Za-z]+)\s*:\s*(\d+)\s*(min|mins|minute|minutes)$/i;
+const PER_SIDE_RE = /^(\d+(?:\.\d+)?)\s*(lbs?)?\s+per\s+side\s*:\s*(.+)$/i;
+const LIFT_HEADER_RE = /^([^:]+):\s*(\d+)\s*(?:sets?)?:?(?:\s.*)?$/;
+const LIFT_HEADER_ALT_RE = /^([A-Za-z][A-Za-z\s-]*?)\s+(\d+)\s+sets?\b.*$/;
+const INCOMPLETE_LIFT_RE = /^([^:]+):\s*$/;
+const DETAIL_TOKEN_RE = /^(\d+(?:\.\d+)?)x(\d+)?$/;
+const BARE_NUMBER_RE = /^\d+(?:\.\d+)?$/;
+const WXR_SPACE_RE = /(\d)\s*x\s*(\d)/g;
+const TOKEN_SPLIT_RE = /[,\s]+/;
+const LEADING_KG_RE = /^\s*\(\s*kg\s*\)\s*/i;
+const TRAILING_KG_RE = /\s*\(\s*kg\s*\)\s*$/i;
+// R6b colon-less fallback: "Pushups x3", "Biceps 4"
+const LIFT_HEADER_NOCOLON_RE = /^([A-Za-z].*?)\s+x?(\d+)(?:\s+(?:set|sets))?\s*$/;
+const PHRASE_CARDIO_DUR_RE = /(\d+)\s*(?:min|minute)/;
+
+function _tryDate(line, year) {
+  const m = DATE_RE.exec(line);
+  if (!m) return null;
+  const monthName = (m[1] || m[4]).toLowerCase();
+  const dayNum = parseInt(m[2] || m[5], 10);
+  return mkDate(year, MONTH_MAP[monthName], dayNum);
+}
+
+function _tryTotal(line) {
+  let m = TOTAL_RE_A.exec(line);
+  if (m) return parseInt(m[1], 10);
+  m = TOTAL_RE_B.exec(line);
+  if (m) return parseInt(m[1], 10);
+  return null;
+}
+
+function _trySingleWordCardio(line) {
+  const lower = line.toLowerCase();
+  const phrases = CARDIO_PHRASES.concat(USER_CARDIO_PHRASES);
+  for (const phrase of phrases) {
+    if (lower.indexOf(phrase) !== -1) {
+      const m = PHRASE_CARDIO_DUR_RE.exec(lower);
+      const dur = m ? parseInt(m[1], 10) : null;
+      return { raw_name: phrase.replace(/ /g, "_"), duration_minutes: dur };
+    }
+  }
+  if (line.indexOf(":") !== -1) return null;
+  const tokens = line.split(/\s+/).filter(t => t);
+  if (tokens.length !== 1) return null;
+  const tok = tokens[0];
+  if (!/^[A-Za-z]+$/.test(tok)) return null;
+  const tl = tok.toLowerCase();
+  if (CARDIO_WHITELIST.has(tl) || USER_CARDIO_WORDS.has(tl)) {
+    return { raw_name: tok, duration_minutes: null };
+  }
+  return null;
+}
+
+function _tryTimedCardio(line) {
+  const m = TIMED_CARDIO_RE.exec(line);
+  if (!m) return null;
+  const word = m[1];
+  const wl = word.toLowerCase();
+  if (!CARDIO_WHITELIST.has(wl) && !USER_CARDIO_WORDS.has(wl)) return null;
+  return { raw_name: word, duration_minutes: parseInt(m[2], 10) };
+}
+
+function _tryPerSide(line) {
+  const m = PER_SIDE_RE.exec(line);
+  if (!m) return null;
+  const weight = parseFloat(m[1]);
+  const repsPart = m[3];
+  const reps = [];
+  for (let tok of repsPart.split(TOKEN_SPLIT_RE)) {
+    tok = tok.trim();
+    if (!tok) continue;
+    if (/^\d+$/.test(tok)) reps.push(parseInt(tok, 10));
+  }
+  return [weight, reps];
+}
+
+function _tryLiftHeader(line) {
+  let m = LIFT_HEADER_RE.exec(line);
+  if (m) return [m[1].trim(), parseInt(m[2], 10)];
+  m = LIFT_HEADER_ALT_RE.exec(line);
+  if (m) return [m[1].trim(), parseInt(m[2], 10)];
+  return null;
+}
+
+function _isIncompleteLift(line) {
+  if (LIFT_HEADER_RE.exec(line)) return null;
+  const m = INCOMPLETE_LIFT_RE.exec(line);
+  if (m) return m[1].trim();
+  return null;
+}
+
+function _extractUnit(line) {
+  let m = LEADING_KG_RE.exec(line);
+  if (m) return ["kg", line.slice(m[0].length)];
+  m = TRAILING_KG_RE.exec(line);
+  if (m) return ["kg", line.slice(0, m.index)];
+  return ["lbs", line];
+}
+
+function _parseDetailLine(line, dayIso, exerciseName, warnings) {
+  const [unit, restRaw] = _extractUnit(line);
+  const rest = restRaw.replace(WXR_SPACE_RE, "$1x$2");
+  const details = [];
+  for (let tok of rest.split(TOKEN_SPLIT_RE)) {
+    tok = tok.trim();
+    if (!tok) continue;
+    const m = DETAIL_TOKEN_RE.exec(tok);
+    if (m) {
+      const weight = parseFloat(m[1]);
+      const repsStr = m[2];
+      if (repsStr !== undefined) {
+        details.push({ weight: weight, reps: parseInt(repsStr, 10), unit: unit });
+      } else {
+        details.push({ weight: weight, reps: null, unit: unit });
+        warnings.push("malformed set token '" + tok + "' (missing reps) for '" +
+                      exerciseName + "' on " + dayIso);
+      }
+      continue;
+    }
+    if (BARE_NUMBER_RE.test(tok)) {
+      details.push({ weight: null, reps: parseInt(tok, 10), unit: unit });
+      continue;
+    }
+    warnings.push("unparseable set token '" + tok + "' for '" +
+                  exerciseName + "' on " + dayIso);
+  }
+  return details;
+}
+
+function parseLog(text, defaultYear) {
+  const lines = text.split(/\r?\n/);
+  const days = [];
+  const warnings = [];
+  let current = null;  // {day, lifts, cardio, declared_total, unrecognized}
+  let runningYear = defaultYear;
+  let prevDate = null;
+  let pendingLift = null;  // [raw_name, declared_sets, canonical]
+
+  function flushPendingNoDetails() {
+    if (pendingLift === null || current === null) {
+      pendingLift = null;
+      return;
+    }
+    const [rawName, declaredSets, canonical] = pendingLift;
+    current.lifts.push({
+      raw_name: rawName, canonical_name: canonical,
+      declared_sets: declaredSets, details: [],
+      raw_detail_line: null, is_per_side: false,
+    });
+    if (canonical === null) current.unrecognized.push(rawName);
+    pendingLift = null;
+  }
+
+  function attachDetails(details, rawDetailLine, isPerSide) {
+    const [rawName, declaredSets, canonical] = pendingLift;
+    current.lifts.push({
+      raw_name: rawName, canonical_name: canonical,
+      declared_sets: declaredSets, details: details,
+      raw_detail_line: rawDetailLine, is_per_side: isPerSide,
+    });
+    if (canonical === null) current.unrecognized.push(rawName);
+    if (details.length !== declaredSets) {
+      warnings.push("set count mismatch for '" + rawName + "' on " +
+                    current.day.iso + ": declared " + declaredSets +
+                    ", got " + details.length + " details");
+    }
+    pendingLift = null;
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;  // blank lines don't flush pending
+
+    // R1: date header
+    let d = _tryDate(line, runningYear);
+    if (d !== null) {
+      if (prevDate !== null && d.m < prevDate.m) {
+        runningYear += 1;
+        d = mkDate(runningYear, d.m, d.d);
+      }
+      flushPendingNoDetails();
+      if (current !== null) days.push(current);
+      current = { day: d, lifts: [], cardio: [], declared_total: null, unrecognized: [] };
+      prevDate = d;
+      continue;
+    }
+
+    if (current === null) {
+      warnings.push("line before first date header ignored: '" + line + "'");
+      continue;
+    }
+
+    // R2: total
+    const tot = _tryTotal(line);
+    if (tot !== null) {
+      flushPendingNoDetails();
+      if (current.declared_total !== null) {
+        warnings.push("duplicate total line on " + current.day.iso +
+                      ": keeping first (" + current.declared_total + "), ignoring " + tot);
+      } else {
+        current.declared_total = tot;
+      }
+      continue;
+    }
+
+    // R3: single-word / phrase cardio
+    let cardio = _trySingleWordCardio(line);
+    if (cardio !== null) {
+      flushPendingNoDetails();
+      current.cardio.push(cardio);
+      continue;
+    }
+
+    // R4: timed cardio
+    cardio = _tryTimedCardio(line);
+    if (cardio !== null) {
+      flushPendingNoDetails();
+      current.cardio.push(cardio);
+      continue;
+    }
+
+    // R5: per-side detail — only if pending lift
+    if (pendingLift !== null) {
+      const perSide = _tryPerSide(line);
+      if (perSide !== null) {
+        const [weight, repsList] = perSide;
+        const details = repsList.map(r => ({ weight: weight, reps: r, unit: "lbs" }));
+        attachDetails(details, line, true);
+        continue;
+      }
+    }
+
+    // R6a: incomplete lift header
+    const incomplete = _isIncompleteLift(line);
+    if (incomplete !== null) {
+      flushPendingNoDetails();
+      warnings.push("incomplete lift header on " + current.day.iso +
+                    ": '" + line + "' (name present, no set count)");
+      continue;
+    }
+
+    // R6: lift header
+    const lh = _tryLiftHeader(line);
+    if (lh !== null) {
+      flushPendingNoDetails();
+      const [rawName, declaredSets] = lh;
+      const canonical = normalize(rawName);
+      pendingLift = [rawName, declaredSets, canonical];
+      continue;
+    }
+
+    // R6b: colon-less lift header fallback
+    const mAlt = LIFT_HEADER_NOCOLON_RE.exec(line);
+    if (mAlt !== null) {
+      const rawNameAlt = mAlt[1].trim();
+      const setsAlt = parseInt(mAlt[2], 10);
+      const canonicalAlt = normalize(rawNameAlt);
+      if (canonicalAlt !== null) {
+        flushPendingNoDetails();
+        pendingLift = [rawNameAlt, setsAlt, canonicalAlt];
+        continue;
+      }
+    }
+
+    // R7: standard detail line — only if pending lift
+    if (pendingLift !== null) {
+      const details = _parseDetailLine(line, current.day.iso, pendingLift[0], warnings);
+      attachDetails(details, line, false);
+      continue;
+    }
+
+    // R10: unknown
+    warnings.push("unrecognized line on " + current.day.iso + ": '" + line + "'");
+  }
+
+  flushPendingNoDetails();
+  if (current !== null) days.push(current);
+
+  return { days: days, warnings: warnings };
+}
+
+// ---- aggregate.py --------------------------------------------------------
+
+const KG_TO_LBS = 2.20462;
+const MIN_STRENGTH_DATAPOINTS = 5;
+const RECENCY_WINDOW_DAYS = 45;
+const OUTLIER_THRESHOLD = 0.30;
+
+function aggregateVolume(result) {
+  // key = "isoYear|isoWeek"
+  const totalSets = {};
+  const muscleSets = {};
+  const cardioCount = {};
+
+  for (const wd of result.days) {
+    const iso = isoCalendar(wd.day);
+    const key = iso.year + "|" + iso.week;
+    if (!(key in totalSets)) { totalSets[key] = 0; muscleSets[key] = {}; cardioCount[key] = 0; }
+    for (const lift of wd.lifts) {
+      totalSets[key] += lift.declared_sets;
+      if (lift.canonical_name !== null) {
+        const muscles = musclesFor(lift.canonical_name);
+        for (const muscle of muscles) {
+          muscleSets[key][muscle] = (muscleSets[key][muscle] || 0) + lift.declared_sets;
+        }
+      }
+    }
+    cardioCount[key] += wd.cardio.length;
+  }
+
+  const allKeys = Object.keys(totalSets);
+  allKeys.sort((a, b) => {
+    const [ay, aw] = a.split("|").map(Number);
+    const [by, bw] = b.split("|").map(Number);
+    return ay !== by ? ay - by : aw - bw;
+  });
+
+  return allKeys.map(key => {
+    const [iy, iw] = key.split("|").map(Number);
+    return {
+      iso_year: iy, iso_week: iw,
+      total_sets: totalSets[key],
+      sets_by_muscle: muscleSets[key],
+      cardio_sessions: cardioCount[key],
+    };
+  });
+}
+
+function detectStrengthTrackable(result) {
+  // An exercise is trackable iff it has ≥5 post-filter strength datapoints
+  // AND at least one of those is within the last 45 days.
+  if (result.days.length === 0) return new Set();
+  let latestEpochDay = -Infinity;
+  for (const wd of result.days) {
+    if (wd.day.epochDay > latestEpochDay) latestEpochDay = wd.day.epochDay;
+  }
+  const recencyCutoff = latestEpochDay - RECENCY_WINDOW_DAYS;
+
+  // Collect all canonical names seen
+  const allNames = new Set();
+  for (const wd of result.days) {
+    for (const lift of wd.lifts) {
+      if (lift.canonical_name !== null) allNames.add(lift.canonical_name);
+    }
+  }
+
+  const trackable = new Set();
+  for (const name of allNames) {
+    const points = aggregateStrength(result, name);
+    if (points.length < MIN_STRENGTH_DATAPOINTS) continue;
+    if (!points.some(p => p.day.epochDay >= recencyCutoff)) continue;
+    trackable.add(name);
+  }
+  return trackable;
+}
+
+function _weightInLbs(detail) {
+  return detail.unit === "kg" ? detail.weight * KG_TO_LBS : detail.weight;
+}
+
+function _brzyckiE1rm(detail) {
+  if (detail.weight === null || detail.reps === null || detail.reps < 1 || detail.reps >= 37) return null;
+  return _weightInLbs(detail) * 36 / (37 - detail.reps);
+}
+
+function aggregateStrength(result, exercise) {
+  const byDay = {};  // epochDay → [{e1rm, detail}]
+
+  for (const wd of result.days) {
+    for (const lift of wd.lifts) {
+      if (lift.canonical_name !== exercise) continue;
+      for (const detail of lift.details) {
+        const e1rm = _brzyckiE1rm(detail);
+        if (e1rm !== null) {
+          const k = wd.day.epochDay;
+          if (!byDay[k]) byDay[k] = [];
+          byDay[k].push({ e1rm: e1rm, detail: detail });
+        }
+      }
+    }
+  }
+
+  const rawPoints = [];
+  const sortedDays = Object.keys(byDay).map(Number).sort((a, b) => a - b);
+  for (const ed of sortedDays) {
+    const candidates = byDay[ed];
+    if (candidates.length === 0) continue;
+    // Capture the sets as lifted (insertion order) BEFORE sorting by e1rm,
+    // so the tooltip shows them in the order they were logged.
+    const setsStr = candidates.map(function(c) {
+      const d = c.detail;
+      const w = d.weight % 1 === 0 ? d.weight.toFixed(0) : d.weight.toFixed(1);
+      return w + (d.unit === "kg" ? "kg" : "") + "×" + d.reps;
+    }).join(", ");
+    candidates.sort((a, b) => b.e1rm - a.e1rm);
+    const top2 = candidates.slice(0, 2);
+    const avgE1rm = top2.reduce((s, c) => s + c.e1rm, 0) / top2.length;
+    rawPoints.push({
+      day: dateFromEpochDay(ed),
+      canonical_name: exercise,
+      best_e1rm_lbs: avgE1rm,
+      best_set: top2[0].detail,
+      sets: setsStr,
+    });
+  }
+  return _filterOutliers(rawPoints);
+}
+
+function _filterOutliers(points) {
+  // Drop any point ≥30% off the previous kept point. No time-gap exemption.
+  if (points.length === 0) return points;
+  const kept = [points[0]];
+  for (let i = 1; i < points.length; i++) {
+    const p = points[i];
+    const prev = kept[kept.length - 1];
+    if (prev.best_e1rm_lbs > 0) {
+      const ratio = Math.abs(p.best_e1rm_lbs - prev.best_e1rm_lbs) / prev.best_e1rm_lbs;
+      if (ratio >= OUTLIER_THRESHOLD) continue;
+    }
+    kept.push(p);
+  }
+  return kept;
+}
+
+// ---- monthly.py ----------------------------------------------------------
+
+function aggregateMonthly(result) {
+  const totalSets = {};
+  const muscleSets = {};
+  const cardioCount = {};
+  const liftDayCount = {};
+
+  for (const wd of result.days) {
+    const key = wd.day.y + "|" + wd.day.m;
+    if (!(key in totalSets)) {
+      totalSets[key] = 0; muscleSets[key] = {}; cardioCount[key] = 0; liftDayCount[key] = 0;
+    }
+    if (wd.lifts.length > 0) liftDayCount[key] += 1;
+    for (const lift of wd.lifts) {
+      totalSets[key] += lift.declared_sets;
+      if (lift.canonical_name !== null) {
+        const muscles = musclesFor(lift.canonical_name);
+        for (const muscle of muscles) {
+          muscleSets[key][muscle] = (muscleSets[key][muscle] || 0) + lift.declared_sets;
+        }
+      }
+    }
+    cardioCount[key] += wd.cardio.length;
+  }
+
+  const allKeys = Object.keys(totalSets);
+  allKeys.sort((a, b) => {
+    const [ay, am] = a.split("|").map(Number);
+    const [by, bm] = b.split("|").map(Number);
+    return ay !== by ? ay - by : am - bm;
+  });
+
+  // Partial-month detection
+  let logStart = null, logEnd = null;
+  for (const wd of result.days) {
+    if (logStart === null || wd.day.epochDay < logStart.epochDay) logStart = wd.day;
+    if (logEnd === null || wd.day.epochDay > logEnd.epochDay) logEnd = wd.day;
+  }
+
+  return allKeys.map(key => {
+    const [year, month] = key.split("|").map(Number);
+    const dim = daysInMonth(year, month);
+    const wd = liftDayCount[key];
+    const avgPerWeek = wd * 7.0 / dim;
+
+    const monthFirst = mkDate(year, month, 1);
+    const monthLast = mkDate(year, month, dim);
+    let isPartial = false;
+    if (logStart !== null && logEnd !== null) {
+      if (logStart.epochDay > monthFirst.epochDay &&
+          (logStart.epochDay - monthFirst.epochDay) > 3) {
+        isPartial = true;
+      }
+      if (logEnd.epochDay < monthLast.epochDay &&
+          (monthLast.epochDay - logEnd.epochDay) > 3) {
+        isPartial = true;
+      }
+    }
+
+    return {
+      year: year, month: month,
+      total_sets: totalSets[key],
+      sets_by_muscle: muscleSets[key],
+      cardio_sessions: cardioCount[key],
+      workout_days: wd,
+      avg_sessions_per_week: avgPerWeek,
+      is_partial: isPartial,
+    };
+  });
+}
+
+// ---- stats.py ------------------------------------------------------------
+
+const DEFAULT_WINDOW_DAYS = 90;
+
+function computeStats(result, windowDays) {
+  if (windowDays === undefined) windowDays = DEFAULT_WINDOW_DAYS;
+  if (result.days.length === 0) {
+    throw new Error("cannot compute stats on an empty log");
+  }
+
+  let first = result.days[0].day, last = result.days[0].day;
+  for (const wd of result.days) {
+    if (wd.day.epochDay < first.epochDay) first = wd.day;
+    if (wd.day.epochDay > last.epochDay) last = wd.day;
+  }
+
+  let windowStartEd = last.epochDay - windowDays;
+  if (windowStartEd < first.epochDay) windowStartEd = first.epochDay;
+  const windowStart = dateFromEpochDay(windowStartEd);
+
+  const windowDaysIn = result.days.filter(wd => wd.day.epochDay >= windowStartEd);
+  const windowResult = { days: windowDaysIn, warnings: [] };
+
+  const weeks = aggregateVolume(windowResult);
+  const nWeeks = weeks.length;
+
+  const windowTotalSets = weeks.reduce((s, w) => s + w.total_sets, 0);
+  const avgSetsPerWeek = windowTotalSets / nWeeks;
+
+  const muscleTotals = {};
+  for (const w of weeks) {
+    for (const [muscle, sets] of Object.entries(w.sets_by_muscle)) {
+      muscleTotals[muscle] = (muscleTotals[muscle] || 0) + sets;
+    }
+  }
+
+  const avgPerMuscle = {};
+  for (const [m, s] of Object.entries(muscleTotals)) {
+    if (s > 0) avgPerMuscle[m] = s / nWeeks;
+  }
+
+  const windowLiftDays = new Set();
+  for (const wd of windowDaysIn) {
+    if (wd.lifts.length > 0) windowLiftDays.add(wd.day.epochDay);
+  }
+  const avgWorkoutDaysPerWeek = windowLiftDays.size / nWeeks;
+
+  const fullLiftDays = new Set();
+  for (const wd of result.days) {
+    if (wd.lifts.length > 0) fullLiftDays.add(wd.day.epochDay);
+  }
+  const fullWeeks = aggregateVolume(result);
+  const fullTotalSets = fullWeeks.reduce((s, w) => s + w.total_sets, 0);
+
+  let most = "(none)", least = "(none)";
+  const muscleNames = Object.keys(muscleTotals);
+  if (muscleNames.length > 0) {
+    most = muscleNames.reduce((a, b) => muscleTotals[a] >= muscleTotals[b] ? a : b);
+    least = muscleNames.reduce((a, b) => muscleTotals[a] <= muscleTotals[b] ? a : b);
+  }
+
+  return {
+    avg_sets_per_week: avgSetsPerWeek,
+    avg_sets_per_muscle_per_week: avgPerMuscle,
+    avg_workout_days_per_week: avgWorkoutDaysPerWeek,
+    total_weeks: nWeeks,
+    total_workout_days: fullLiftDays.size,
+    total_sets: fullTotalSets,
+    date_range: [first, last],
+    window_range: [windowStart, last],
+    most_trained_muscle: most,
+    least_trained_muscle: least,
+  };
+}
+
+// ---- Payload builder (mirrors server.py _build_payload) -----------------
+
+function buildPayloadFromResult(result, windowDays) {
+  if (result.days.length === 0) {
+    throw new Error("No workout days found in log. Check the date format (e.g. 'Jan 2').");
+  }
+
+  const weeks = aggregateVolume(result);
+  const months = aggregateMonthly(result);
+  const stats = computeStats(result, windowDays);
+
+  const muscleSet = new Set();
+  for (const muscles of Object.values(MUSCLE_GROUPS)) {
+    for (const m of muscles) muscleSet.add(m);
+  }
+  const muscleOrder = Array.from(muscleSet).sort();
+
+  const weeklyPayload = weeks.map(w => ({
+    iso_year: w.iso_year,
+    iso_week: w.iso_week,
+    label: w.iso_year + "-W" + String(w.iso_week).padStart(2, "0"),
+    total_sets: w.total_sets,
+    sets_by_muscle: w.sets_by_muscle,
+    cardio_sessions: w.cardio_sessions,
+  }));
+
+  const monthlyPayload = months.map(m => ({
+    year: m.year, month: m.month,
+    label: m.year + "-" + String(m.month).padStart(2, "0"),
+    total_sets: m.total_sets,
+    sets_by_muscle: m.sets_by_muscle,
+    cardio_sessions: m.cardio_sessions,
+    workout_days: m.workout_days,
+    avg_sessions_per_week: Math.round(m.avg_sessions_per_week * 100) / 100,
+    is_partial: m.is_partial,
+  }));
+
+  const trackable = Array.from(detectStrengthTrackable(result)).sort();
+  const strengthPayload = {};
+  for (const exercise of trackable) {
+    const points = aggregateStrength(result, exercise);
+    strengthPayload[exercise] = points.map(p => ({
+      day: p.day.iso,
+      e1rm_lbs: Math.round(p.best_e1rm_lbs * 10) / 10,
+      sets: p.sets,
+      best_set: {
+        weight: p.best_set.weight,
+        reps: p.best_set.reps,
+        unit: p.best_set.unit,
+      },
+    }));
+  }
+
+  const [first, last] = stats.date_range;
+  const [winFirst, winLast] = stats.window_range;
+  const round1 = x => Math.round(x * 10) / 10;
+  const roundedMuscleAvg = {};
+  for (const [m, v] of Object.entries(stats.avg_sets_per_muscle_per_week)) {
+    roundedMuscleAvg[m] = round1(v);
+  }
+  const statsPayload = {
+    avg_sets_per_week: round1(stats.avg_sets_per_week),
+    avg_sets_per_muscle_per_week: roundedMuscleAvg,
+    avg_workout_days_per_week: round1(stats.avg_workout_days_per_week),
+    total_weeks: stats.total_weeks,
+    total_workout_days: stats.total_workout_days,
+    date_range: [first.iso, last.iso],
+    window_range: [winFirst.iso, winLast.iso],
+    most_trained_muscle: stats.most_trained_muscle,
+    least_trained_muscle: stats.least_trained_muscle,
+    total_sets: stats.total_sets,
+  };
+
+  return {
+    muscle_order: muscleOrder,
+    weekly: weeklyPayload,
+    monthly: monthlyPayload,
+    strength: strengthPayload,
+    trackable_exercises: trackable,
+    stats: statsPayload,
+    warnings: result.warnings,
+    days: result.days,  // raw parsed days for the log viewer
+  };
+}
+
+// ============================================================================
+// RENDERING (from server.py _HTML_TEMPLATE)
+// ============================================================================
+
+const MUSCLE_COLORS = {
+  chest:       "#ff5c40",
+  front_delts: "#ff7a52",
+  triceps:     "#ff9a6e",
+  back:        "#2e9bb8",
+  rear_delts:  "#4cb4cc",
+  biceps:      "#6ccbdc",
+  quads:       "#7fa838",
+  hamstrings:  "#99c248",
+  glutes:      "#b4db5c",
+  calves:      "#cdeb7a",
+  side_delts:  "#a8c454",
+  abs:         "#6a7a4a",
+};
+const MUSCLE_STACK_ORDER = [
+  "chest", "front_delts", "triceps",
+  "back", "rear_delts", "biceps",
+  "quads", "hamstrings", "glutes", "calves", "side_delts", "abs",
+];
+
+const PLOT_CFG = { responsive: true, displayModeBar: false };
+const DARK_LAYOUT = {
+  paper_bgcolor: "#14181d",
+  plot_bgcolor: "#14181d",
+  font: { family: "DM Mono, monospace", color: "#7a8591", size: 11 },
+  xaxis: { gridcolor: "#2a3139", zerolinecolor: "#2a3139" },
+  yaxis: { gridcolor: "#2a3139", zerolinecolor: "#2a3139" },
+};
+
+function fmtDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function legendBottom() {
+  return {
+    orientation: "h", x: 0, xanchor: "left", y: -0.22, yanchor: "top",
+    font: { size: 10, family: "DM Mono, monospace", color: "#7a8591" },
+    bgcolor: "rgba(0,0,0,0)",
+  };
+}
+
+function darkLayout(overrides) {
+  return Object.assign({}, DARK_LAYOUT, overrides, {
+    xaxis: Object.assign({}, DARK_LAYOUT.xaxis, overrides.xaxis || {}),
+    yaxis: Object.assign({}, DARK_LAYOUT.yaxis, overrides.yaxis || {}),
+  });
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[c]);
+}
+
+function volumeStatusColor(v) {
+  if (v >= 10) return "#c7f464";
+  if (v >= 5)  return "#f4b400";
+  return "#ff5c40";
+}
+
+function renderDashboard(data) {
+  document.getElementById("dashboard").style.display = "";
+  document.getElementById("empty-state").style.display = "none";
+
+  const st = data.stats;
+  document.getElementById("subtitle").textContent =
+    fmtDate(st.date_range[0]) + " \u2013 " + fmtDate(st.date_range[1]) + " \u00b7 " +
+    st.total_workout_days + " workout days \u00b7 " + st.total_sets + " total sets";
+
+  document.getElementById("window-label").textContent =
+    "averages over " + fmtDate(st.window_range[0]) + " \u2013 " + fmtDate(st.window_range[1]) +
+    " (" + st.total_weeks + " weeks)";
+
+  // --- Summary cards ---
+  const cards = [
+    ["Avg sets/week", st.avg_sets_per_week.toFixed(1), true],
+    ["Days/week", st.avg_workout_days_per_week.toFixed(1), false],
+    ["Total sets (all time)", String(st.total_sets), false],
+    ["Top muscle", st.most_trained_muscle.replace(/_/g, " "), false],
+  ];
+  document.getElementById("summary-cards").innerHTML = cards.map(
+    ([label, value, hero], i) =>
+      `<div class="card${hero ? ' hero' : ''}" style="--i:${i}"><div class="label">${label}</div><div class="value">${escapeHtml(String(value))}</div></div>`
+  ).join("");
+
+  // --- Muscle chips ---
+  const muscleEntries = Object.entries(st.avg_sets_per_muscle_per_week)
+    .sort((a, b) => b[1] - a[1]);
+  const maxMuscleVal = muscleEntries.length ? muscleEntries[0][1] : 1;
+  document.getElementById("muscle-grid").innerHTML = muscleEntries.map(
+    ([m, v], i) => {
+      const pct = maxMuscleVal > 0 ? (v / maxMuscleVal * 100).toFixed(1) : 0;
+      const col = volumeStatusColor(v);
+      return `<div class="muscle-chip" style="--mc:${col}; --fill:${pct}%; --i:${i}">` +
+             `<div class="m-name">${escapeHtml(m.replace(/_/g, " "))}</div>` +
+             `<div class="m-val">${v.toFixed(1)}<span class="unit">/wk</span></div></div>`;
+    }
+  ).join("");
+
+  // --- Weekly volume ---
+  const weekLabels = data.weekly.map(w => w.label);
+  const stackMuscles = MUSCLE_STACK_ORDER.filter(m => data.muscle_order.includes(m))
+    .concat(data.muscle_order.filter(m => !MUSCLE_STACK_ORDER.includes(m)));
+  const weeklyTraces = stackMuscles.map(muscle => ({
+    x: weekLabels,
+    y: data.weekly.map(w => w.sets_by_muscle[muscle] || 0),
+    name: muscle,
+    type: "bar",
+    marker: { color: MUSCLE_COLORS[muscle] || undefined },
+  }));
+  weeklyTraces.push({
+    x: weekLabels,
+    y: data.weekly.map(w => w.total_sets),
+    name: "total",
+    type: "scatter",
+    mode: "lines+markers",
+    line: { color: "#c7f464", width: 2 },
+    marker: { size: 5, color: "#c7f464" },
+  });
+  Plotly.newPlot("weekly-chart", weeklyTraces, darkLayout({
+    barmode: "stack",
+    xaxis: { title: { text: "ISO WEEK" }, tickfont: { size: 9 } },
+    yaxis: { title: { text: "SETS" } },
+    margin: { t: 10, r: 10, b: 80, l: 50 },
+    legend: legendBottom(),
+  }), PLOT_CFG);
+
+  // --- Per-muscle volume ---
+  const muscleSel = document.getElementById("muscle-select");
+  const musclesWithData = data.muscle_order.filter(
+    m => data.weekly.some(w => (w.sets_by_muscle[m] || 0) > 0)
+  ).sort((a, b) =>
+    (st.avg_sets_per_muscle_per_week[b] || 0) - (st.avg_sets_per_muscle_per_week[a] || 0)
+  );
+
+  function renderPerMuscle(muscle) {
+    const ys = data.weekly.map(w => w.sets_by_muscle[muscle] || 0);
+    const pointColors = ys.map(volumeStatusColor);
+    const trace = {
+      x: weekLabels, y: ys,
+      mode: "lines+markers", type: "scatter", name: muscle,
+      line: { color: "#7a8591", width: 1.5 },
+      marker: { size: 9, color: pointColors, line: { color: "#14181d", width: 1.5 } },
+      hovertemplate: "%{x}<br>" + muscle + ": %{y} sets<extra></extra>",
+    };
+    const avgLine = {
+      x: weekLabels,
+      y: weekLabels.map(() => st.avg_sets_per_muscle_per_week[muscle] || 0),
+      mode: "lines", type: "scatter", name: "avg",
+      line: { color: "#e4e8ed", width: 1, dash: "dash" },
+      hoverinfo: "skip",
+    };
+    const dataMax = Math.max.apply(null, ys.concat([0]));
+    const yTop = Math.max(12, dataMax * 1.1);
+    const shapes = [
+      { type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y",
+        y0: 0, y1: Math.min(5, yTop),
+        fillcolor: "#ff5c40", opacity: 0.06, line: { width: 0 }, layer: "below" },
+      { type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y",
+        y0: Math.min(5, yTop), y1: Math.min(10, yTop),
+        fillcolor: "#f4b400", opacity: 0.06, line: { width: 0 }, layer: "below" },
+      { type: "rect", xref: "paper", x0: 0, x1: 1, yref: "y",
+        y0: Math.min(10, yTop), y1: yTop,
+        fillcolor: "#c7f464", opacity: 0.06, line: { width: 0 }, layer: "below" },
+    ];
+    Plotly.newPlot("permuscle-chart", [avgLine, trace], darkLayout({
+      xaxis: { title: { text: "ISO WEEK" }, tickfont: { size: 9 } },
+      yaxis: { title: { text: "SETS" }, range: [0, yTop] },
+      margin: { t: 10, r: 10, b: 50, l: 50 },
+      showlegend: false,
+      shapes: shapes,
+    }), PLOT_CFG);
+  }
+
+  muscleSel.innerHTML = musclesWithData.map(
+    m => `<option value="${escapeHtml(m)}">${escapeHtml(m.replace(/_/g, " "))}</option>`
+  ).join("");
+  muscleSel.onchange = () => renderPerMuscle(muscleSel.value);
+  if (musclesWithData.length > 0) renderPerMuscle(musclesWithData[0]);
+
+  // --- Monthly sparklines ---
+  const fullMonths = data.monthly.filter(m => !m.is_partial);
+  const partialMonths = data.monthly.filter(m => m.is_partial);
+  const monthLabels = fullMonths.map(m => m.label);
+  const sparkMuscles = stackMuscles.filter(
+    m => fullMonths.some(mo => (mo.sets_by_muscle[m] || 0) > 0)
+  );
+  const sparkGrid = document.getElementById("spark-grid");
+  sparkGrid.innerHTML = sparkMuscles.map(m => {
+    const col = MUSCLE_COLORS[m] || "#7a8591";
+    const ys = fullMonths.map(mo => mo.sets_by_muscle[m] || 0);
+    const last = ys.length ? ys[ys.length - 1] : 0;
+    return `<div class="spark-cell" style="--mc:${col}">` +
+           `<div class="spark-head"><span class="s-name">${m.replace(/_/g, " ")}</span>` +
+           `<span class="s-last">${last}</span></div>` +
+           `<div class="spark" id="spark-${m}"></div></div>`;
+  }).join("");
+  sparkMuscles.forEach(m => {
+    const col = MUSCLE_COLORS[m] || "#7a8591";
+    Plotly.newPlot("spark-" + m, [{
+      x: monthLabels,
+      y: fullMonths.map(mo => mo.sets_by_muscle[m] || 0),
+      type: "scatter", mode: "lines+markers",
+      line: { color: col, width: 2, shape: "spline" },
+      marker: { size: 4, color: col },
+      fill: "tozeroy", fillcolor: col + "20",
+      hovertemplate: "%{x}: %{y} sets<extra></extra>",
+    }], {
+      paper_bgcolor: "#14181d", plot_bgcolor: "#14181d",
+      margin: { t: 4, r: 4, b: 14, l: 4 },
+      xaxis: { visible: false, fixedrange: true },
+      yaxis: { visible: false, fixedrange: true, rangemode: "tozero" },
+      showlegend: false,
+    }, { displayModeBar: false, responsive: true });
+  });
+  const noteEl = document.getElementById("spark-note");
+  if (partialMonths.length > 0) {
+    noteEl.textContent = "Excluded partial months: " +
+      partialMonths.map(m => m.label).join(", ") +
+      " (last-month value shown in corner)";
+  } else {
+    noteEl.textContent = "";
+  }
+
+  // --- Training frequency ---
+  Plotly.newPlot("frequency-chart", [{
+    x: monthLabels,
+    y: fullMonths.map(m => m.avg_sessions_per_week),
+    type: "bar",
+    marker: { color: "#c7f464" },
+    hovertemplate: "%{x}<br>%{y:.1f} sessions/week<br>(%{customdata} days)<extra></extra>",
+    customdata: fullMonths.map(m => m.workout_days),
+  }], darkLayout({
+    xaxis: { title: { text: "MONTH" } },
+    yaxis: { title: { text: "SESSIONS / WEEK" }, rangemode: "tozero" },
+    margin: { t: 10, r: 10, b: 50, l: 50 },
+    showlegend: false,
+  }), PLOT_CFG);
+
+  // --- Strength progression ---
+  const sel = document.getElementById("exercise-select");
+  const prEl = document.getElementById("pr-callout");
+  const exercises = data.trackable_exercises;
+
+  function renderStrength(ex) {
+    const series = data.strength[ex] || [];
+    if (series.length === 0) {
+      prEl.innerHTML = "";
+      Plotly.newPlot("strength-chart", [], darkLayout({
+        margin: { t: 10, r: 10, b: 50, l: 60 }, showlegend: false,
+      }), PLOT_CFG);
+      return;
+    }
+    const ys = series.map(p => p.e1rm_lbs);
+    const xs = series.map(p => p.day);
+    const maxVal = Math.max.apply(null, ys);
+    const maxIdx = ys.indexOf(maxVal);
+    const firstVal = ys[0];
+    const delta = maxVal - firstVal;
+    const deltaStr = (delta >= 0 ? "+" : "\u2212") + Math.abs(delta).toFixed(1);
+
+    prEl.innerHTML =
+      `<span class="pr-ex">${escapeHtml(ex.replace(/_/g, " "))}</span>` +
+      `<span class="pr-val">${maxVal.toFixed(1)}<span class="pr-unit">lbs e1RM</span></span>` +
+      `<span class="pr-delta${delta < 0 ? ' neg' : ''}">${deltaStr} since ${fmtDate(xs[0])}</span>`;
+
+    const setsList = series.map(p => p.sets || "");
+    const trace = {
+      x: xs, y: ys,
+      mode: "lines+markers", type: "scatter", name: ex,
+      line: { color: "#c7f464", width: 2.5, shape: "spline" },
+      fill: "tozeroy",
+      fillcolor: "rgba(199,244,100,0.08)",
+      marker: { size: 8, color: "#c7f464", line: { color: "#14181d", width: 2 } },
+      customdata: setsList,
+      hovertemplate: "%{x}<br>e1RM: %{y:.1f} lbs<br>lifted: %{customdata}<extra></extra>",
+    };
+    const prMarker = {
+      x: [xs[maxIdx]], y: [maxVal],
+      mode: "markers", type: "scatter",
+      marker: { size: 16, color: "#c7f464", symbol: "diamond",
+                line: { color: "#14181d", width: 2 } },
+      customdata: [setsList[maxIdx]],
+      hovertemplate: "PR: %{y:.1f} lbs<br>lifted: %{customdata}<extra></extra>",
+      showlegend: false,
+    };
+    const yMin = Math.min.apply(null, ys);
+    const yPad = (maxVal - yMin) * 0.15 || 10;
+    Plotly.newPlot("strength-chart", [trace, prMarker], darkLayout({
+      xaxis: { title: { text: "DATE" } },
+      yaxis: { title: { text: "e1RM (LBS)" },
+               range: [Math.max(0, yMin - yPad), maxVal + yPad] },
+      margin: { t: 20, r: 10, b: 50, l: 60 },
+      showlegend: false,
+      annotations: [{
+        x: xs[maxIdx], y: maxVal, text: maxVal.toFixed(1),
+        showarrow: true, arrowhead: 0, ax: 0, ay: -28,
+        font: { family: "Barlow Condensed, sans-serif", size: 14, color: "#c7f464" },
+        bgcolor: "#14181d", bordercolor: "#c7f464", borderwidth: 1, borderpad: 4,
+      }],
+    }), PLOT_CFG);
+  }
+
+  if (exercises.length > 0) {
+    sel.style.display = "";
+    sel.innerHTML = exercises.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e.replace(/_/g, " "))}</option>`).join("");
+    sel.onchange = () => renderStrength(sel.value);
+    renderStrength(exercises[0]);
+  } else {
+    sel.style.display = "none";
+    prEl.innerHTML = "";
+    document.getElementById("strength-chart").innerHTML =
+      '<p class="empty">No strength-trackable exercises yet (need &ge;5 weight&times;reps datapoints, at least one within last 45 days).</p>';
+  }
+
+  // --- Cardio ---
+  Plotly.newPlot("cardio-chart", [{
+    x: weekLabels,
+    y: data.weekly.map(w => w.cardio_sessions),
+    type: "bar",
+    name: "Cardio sessions",
+    marker: { color: "#818cf8" },
+  }], darkLayout({
+    xaxis: { title: { text: "ISO WEEK" }, tickfont: { size: 9 } },
+    yaxis: { title: { text: "SESSIONS" }, dtick: 1 },
+    margin: { t: 10, r: 10, b: 50, l: 50 },
+    showlegend: false,
+  }), PLOT_CFG);
+
+  // --- Workout Log viewer (collapsible, grouped by month) ---
+  // Built as one HTML string and set via innerHTML once — O(n), no DOM thrash.
+  // Entire section is <details> collapsed by default so browser skips paint.
+  (function renderWorkoutLog() {
+    const byMonth = {};  // "YYYY-MM" → [day, day, ...]
+    for (const wd of data.days) {
+      const monthKey = wd.day.iso.slice(0, 7);
+      if (!byMonth[monthKey]) byMonth[monthKey] = [];
+      byMonth[monthKey].push(wd);
+    }
+    const monthKeys = Object.keys(byMonth).sort();
+    const parts = [];
+    for (const mk of monthKeys) {
+      const days = byMonth[mk];
+      const [yr, mo] = mk.split("-");
+      const monthName = new Date(yr, parseInt(mo, 10) - 1, 1)
+        .toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      parts.push(
+        '<details class="log-month"><summary>' + escapeHtml(monthName) +
+        ' <span class="month-count">' + days.length + ' workouts</span></summary>'
+      );
+      for (const d of days) {
+        parts.push('<div class="log-day">');
+        parts.push('<div class="d-date">' + fmtDate(d.day.iso) + '</div>');
+        for (const l of d.lifts) {
+          const canonHint = (l.canonical_name &&
+            l.raw_name.toLowerCase().replace(/ /g, "_") !== l.canonical_name &&
+            l.raw_name.toLowerCase().replace(/s$/, "").replace(/ /g, "_") !== l.canonical_name)
+            ? ' <span class="l-sets">(' + escapeHtml(l.canonical_name.replace(/_/g, " ")) + ')</span>' : "";
+          parts.push(
+            '<div class="d-lift"><span class="l-name">' + escapeHtml(l.raw_name) + '</span>' +
+            '<span class="l-sets">: ' + l.declared_sets +
+            (l.declared_sets === 1 ? ' set' : ' sets') + '</span>' + canonHint
+          );
+          if (l.details && l.details.length > 0) {
+            const detailStr = l.details.map(function(s) {
+              if (s.weight === null) return s.reps + " reps";
+              const w = s.weight % 1 === 0 ? s.weight.toFixed(0) : s.weight.toFixed(1);
+              const u = s.unit === "kg" ? "kg" : "";
+              const r = s.reps === null ? "?" : s.reps;
+              return w + u + "\u00d7" + r;
+            }).join(", ");
+            parts.push('<span class="l-detail">' + detailStr +
+              (l.is_per_side ? " (per side)" : "") + '</span>');
+          }
+          parts.push('</div>');
+        }
+        for (const c of d.cardio) {
+          const dur = c.duration_minutes ? " (" + c.duration_minutes + " min)" : "";
+          parts.push('<div class="d-cardio">\u26A1 ' + escapeHtml(c.raw_name) + dur + '</div>');
+        }
+        if (d.declared_total !== null) {
+          const actual = d.lifts.reduce(function(s, l) { return s + l.declared_sets; }, 0);
+          const match = actual === d.declared_total ? "" : " (actual: " + actual + ")";
+          parts.push('<div class="d-total">total: ' + d.declared_total + match + '</div>');
+        }
+        parts.push('</div>');
+      }
+      parts.push('</details>');
+    }
+    document.getElementById("log-viewer-body").innerHTML = parts.join("");
+    document.getElementById("log-viewer-count").textContent =
+      data.days.length + " workouts in " + monthKeys.length + " months";
+  })();
+
+  // --- Warnings ---
+  const warnEl = document.getElementById("warnings");
+  if (data.warnings.length > 0) {
+    warnEl.innerHTML = data.warnings.map(w => `<li>${escapeHtml(w)}</li>`).join("");
+  } else {
+    warnEl.innerHTML = '<li class="empty">No parse warnings.</li>';
+  }
+}
+
+// ============================================================================
+// WIRING: textarea + localStorage + render button
+// ============================================================================
+
+const LS_LOG_KEY = "workoutLog";
+const LS_YEAR_KEY = "workoutYear";
+const LS_WINDOW_KEY = "workoutWindow";
+
+// Cache the parsed result so slider changes don't re-parse
+let cachedText = null;
+let cachedYear = null;
+let cachedResult = null;
+
+function getWindowDays() {
+  var el = document.getElementById("window-slider");
+  return el ? parseInt(el.value, 10) : 90;
+}
+
+function render() {
+  const text = document.getElementById("log-text").value;
+  const year = parseInt(document.getElementById("year-input").value, 10);
+  if (!text.trim()) {
+    document.getElementById("subtitle").textContent = "paste your log below to get started";
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("empty-state").style.display = "";
+    return;
+  }
+  if (!year || year < 2000 || year > 2100) {
+    document.getElementById("subtitle").textContent = "Error: enter a valid start year";
+    return;
+  }
+  try {
+    localStorage.setItem(LS_LOG_KEY, text);
+    localStorage.setItem(LS_YEAR_KEY, String(year));
+    localStorage.setItem(LS_WINDOW_KEY, String(getWindowDays()));
+  } catch (e) { /* quota exceeded or unavailable — ignore */ }
+  try {
+    // Only re-parse if text or year changed; otherwise reuse cached result
+    if (text !== cachedText || year !== cachedYear || !cachedResult) {
+      cachedResult = parseLog(text, year);
+      cachedText = text;
+      cachedYear = year;
+    }
+    const data = buildPayloadFromResult(cachedResult, getWindowDays());
+    renderDashboard(data);
+    renderExerciseManager();
+    // Collapse the full-log editor after successful render
+    document.getElementById("full-log-panel").open = false;
+  } catch (err) {
+    document.getElementById("subtitle").textContent = "Error: " + err.message;
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("empty-state").style.display = "none";
+    console.error(err);
+  }
+}
+
+function clearData() {
+  try {
+    localStorage.removeItem(LS_LOG_KEY);
+    localStorage.removeItem(LS_YEAR_KEY);
+  } catch (e) {}
+  document.getElementById("log-text").value = "";
+  document.getElementById("subtitle").textContent = "paste your log below to get started";
+  document.getElementById("dashboard").style.display = "none";
+  document.getElementById("empty-state").style.display = "";
+  document.getElementById("full-log-panel").open = true;
+}
+
+// ============================================================================
+// USER CONFIG persistence (custom exercises + muscle overrides)
+// ============================================================================
+
+const LS_CONFIG_KEY = "workoutConfig";
+const ALL_MUSCLES = ["chest", "back", "front_delts", "side_delts", "rear_delts",
+                     "biceps", "triceps", "quads", "hamstrings", "glutes",
+                     "calves", "abs"];
+
+function sanitizeMuscles(arr) {
+  if (!Array.isArray(arr)) return [];
+  return arr.filter(function(m) { return ALL_MUSCLES.indexOf(m) !== -1; });
+}
+
+// Validate config from ANY source (localStorage or gist) — muscles must be
+// from the fixed set, all strings coerced. Prevents tampered config from
+// injecting markup into the DOM.
+function sanitizeConfig(raw) {
+  const out = { exercises: {}, muscle_overrides: {}, cardio: [] };
+  const ex = (raw && raw.exercises) || {};
+  for (const k in ex) {
+    out.exercises[k] = {
+      name: String(ex[k] && ex[k].name || k),
+      variants: Array.isArray(ex[k] && ex[k].variants) ? ex[k].variants.map(String) : [],
+      muscles: sanitizeMuscles(ex[k] && ex[k].muscles),
+    };
+  }
+  const ov = (raw && raw.muscle_overrides) || {};
+  for (const k in ov) {
+    const m = sanitizeMuscles(ov[k]);
+    if (m.length) out.muscle_overrides[k] = m;
+  }
+  if (Array.isArray(raw && raw.cardio)) {
+    out.cardio = raw.cardio
+      .map(function(c) { return String(c).toLowerCase().trim().replace(/[^a-z ]/g, ""); })
+      .filter(Boolean);
+  }
+  return out;
+}
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem(LS_CONFIG_KEY);
+    if (raw) USER_CONFIG = sanitizeConfig(JSON.parse(raw));
+  } catch (e) { /* corrupt config — keep defaults */ }
+  rebuildCustomVariantMap();
+  rebuildUserCardio();
+}
+
+function saveConfig() {
+  try { localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(USER_CONFIG)); } catch (e) {}
+  rebuildCustomVariantMap();
+  rebuildUserCardio();
+  cachedText = null;  // normalization changed — force re-parse
+  if (document.getElementById("log-text").value.trim()) render();
+  markDirtyAndSync();
+}
+
+// ============================================================================
+// GIST SYNC (private gist = durable storage + cross-device sync)
+// ============================================================================
+
+const LS_TOKEN_KEY = "workoutGistToken";
+const LS_GISTID_KEY = "workoutDataGistId";
+const LS_DIRTY_KEY = "workoutDirty";
+const GIST_LOG_FILE = "workout-log.txt";
+const GIST_CFG_FILE = "workout-config.json";
+
+let syncPushTimer = null;
+
+function syncStatus(msg, isErr) {
+  const el = document.getElementById("sync-status");
+  el.textContent = msg;
+  el.className = "status-msg" + (isErr ? " err" : "");
+  const sum = document.getElementById("sync-summary");
+  if (localStorage.getItem(LS_TOKEN_KEY) && localStorage.getItem(LS_GISTID_KEY)) {
+    sum.textContent = isErr ? "⚠" : "✓";
+  } else {
+    sum.textContent = "";
+  }
+}
+
+async function gistApi(method, path, body) {
+  const token = localStorage.getItem(LS_TOKEN_KEY);
+  if (!token) throw new Error("no token");
+  const resp = await fetch("https://api.github.com" + path, {
+    method: method,
+    headers: Object.assign(
+      { "Authorization": "Bearer " + token,
+        "Accept": "application/vnd.github+json" },
+      body ? { "Content-Type": "application/json" } : {}
+    ),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!resp.ok) throw new Error("GitHub " + resp.status);
+  return resp.json();
+}
+
+function gistFilesPayload() {
+  return {
+    [GIST_LOG_FILE]: { content: (localStorage.getItem(LS_LOG_KEY) || "") || " " },
+    [GIST_CFG_FILE]: { content: JSON.stringify({
+      year: localStorage.getItem(LS_YEAR_KEY) || null,
+      window: localStorage.getItem(LS_WINDOW_KEY) || null,
+      config: USER_CONFIG,
+    }, null, 2) },
+  };
+}
+
+async function pushToGist() {
+  const gistId = localStorage.getItem(LS_GISTID_KEY);
+  if (!gistId || !localStorage.getItem(LS_TOKEN_KEY)) return;
+  try {
+    syncStatus("syncing…");
+    await gistApi("PATCH", "/gists/" + gistId, { files: gistFilesPayload() });
+    try { localStorage.removeItem(LS_DIRTY_KEY); } catch (e) {}
+    syncStatus("synced " + new Date().toLocaleTimeString());
+  } catch (err) {
+    syncStatus("sync failed: " + err.message + " (changes saved locally)", true);
+  }
+}
+
+async function pullFromGist() {
+  const gistId = localStorage.getItem(LS_GISTID_KEY);
+  if (!gistId || !localStorage.getItem(LS_TOKEN_KEY)) return;
+  try {
+    syncStatus("loading from gist…");
+    const g = await gistApi("GET", "/gists/" + gistId);
+    const logFile = g.files && g.files[GIST_LOG_FILE];
+    const cfgFile = g.files && g.files[GIST_CFG_FILE];
+    if (cfgFile && cfgFile.content) {
+      try {
+        const cfg = JSON.parse(cfgFile.content);
+        if (cfg.year) {
+          localStorage.setItem(LS_YEAR_KEY, cfg.year);
+          document.getElementById("year-input").value = cfg.year;
+        }
+        if (cfg.window) {
+          localStorage.setItem(LS_WINDOW_KEY, cfg.window);
+          const ws = document.getElementById("window-slider");
+          if (ws) { ws.value = cfg.window;
+            document.getElementById("window-slider-val").textContent = cfg.window + " days"; }
+        }
+        if (cfg.config) {
+          USER_CONFIG = sanitizeConfig(cfg.config);
+          localStorage.setItem(LS_CONFIG_KEY, JSON.stringify(USER_CONFIG));
+          rebuildCustomVariantMap();
+          rebuildUserCardio();
+          cachedText = null;
+        }
+      } catch (e) { /* bad config json — skip */ }
+    }
+    if (logFile && logFile.content && logFile.content.trim()) {
+      document.getElementById("log-text").value = logFile.content;
+      render();
+    }
+    syncStatus("synced " + new Date().toLocaleTimeString());
+  } catch (err) {
+    syncStatus("pull failed: " + err.message, true);
+  }
+}
+
+function markDirtyAndSync() {
+  try { localStorage.setItem(LS_DIRTY_KEY, "1"); } catch (e) {}
+  if (!localStorage.getItem(LS_GISTID_KEY)) return;
+  if (syncPushTimer) clearTimeout(syncPushTimer);
+  syncPushTimer = setTimeout(pushToGist, 2000);
+}
+
+async function connectSync() {
+  const token = document.getElementById("sync-token").value.trim();
+  const gistIdInput = document.getElementById("sync-gist-id").value.trim();
+  if (!token) { syncStatus("enter a token first", true); return; }
+  try { localStorage.setItem(LS_TOKEN_KEY, token); } catch (e) {}
+  try {
+    if (gistIdInput) {
+      // Connect to existing gist → pull its data
+      localStorage.setItem(LS_GISTID_KEY, gistIdInput);
+      await pullFromGist();
+    } else {
+      // Create a fresh private gist from current local data
+      syncStatus("creating private gist…");
+      const g = await gistApi("POST", "/gists", {
+        description: "TrainingLog data (workout tracker)",
+        public: false,
+        files: gistFilesPayload(),
+      });
+      localStorage.setItem(LS_GISTID_KEY, g.id);
+      document.getElementById("sync-gist-id").value = g.id;
+      syncStatus("connected — gist " + g.id);
+    }
+  } catch (err) {
+    syncStatus("connect failed: " + err.message, true);
+  }
+}
+
+function disconnectSync() {
+  try {
+    localStorage.removeItem(LS_TOKEN_KEY);
+    localStorage.removeItem(LS_GISTID_KEY);
+    localStorage.removeItem(LS_DIRTY_KEY);
+  } catch (e) {}
+  document.getElementById("sync-token").value = "";
+  document.getElementById("sync-gist-id").value = "";
+  syncStatus("disconnected (data stays on this device)");
+}
+
+// ============================================================================
+// QUICK-ADD WORKOUT
+// ============================================================================
+
+const MONTH_NAMES = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+function qaStatus(msg, isErr) {
+  const el = document.getElementById("qa-status");
+  el.textContent = msg;
+  el.className = "status-msg" + (isErr ? " err" : "");
+}
+
+function addWorkout() {
+  const dateVal = document.getElementById("qa-date").value;  // "2026-06-09"
+  const txt = document.getElementById("qa-text").value.trim();
+  if (!dateVal) { qaStatus("pick a date", true); return; }
+  if (!txt) { qaStatus("enter at least one exercise", true); return; }
+
+  const parts = dateVal.split("-");
+  const y = parseInt(parts[0], 10), mo = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
+  const logEl = document.getElementById("log-text");
+  let log = logEl.value;
+
+  // Appending only works forward in time (the parser infers years from
+  // month order). Block backdated entries.
+  if (cachedResult && cachedResult.days.length > 0) {
+    const lastIso = cachedResult.days[cachedResult.days.length - 1].day.iso;
+    if (dateVal < lastIso) {
+      qaStatus("date is before last logged workout (" + lastIso + ") — backdated entries must be edited into the full log manually", true);
+      return;
+    }
+  } else if (!log.trim()) {
+    // Empty log: this entry defines the starting year
+    document.getElementById("year-input").value = String(y);
+  }
+
+  const header = MONTH_NAMES[mo - 1] + " " + d;
+  log = (log.replace(/\s+$/, "") + "\n\n" + header + "\n" + txt + "\n").replace(/^\n+/, "");
+  logEl.value = log;
+  render();
+  if (cachedResult) {
+    document.getElementById("qa-text").value = "";
+    qaStatus("saved ✓");
+    markDirtyAndSync();
+  } else {
+    qaStatus("something went wrong — check the full log", true);
+  }
+}
+
+// ============================================================================
+// EXERCISE MANAGER
+// ============================================================================
+
+function musclePickerHtml(idPrefix, checked) {
+  const safePrefix = escapeHtml(String(idPrefix));
+  return ALL_MUSCLES.map(function(m) {
+    const isOn = checked.indexOf(m) !== -1;
+    return '<label class="' + (isOn ? "checked" : "") + '">' +
+      '<input type="checkbox" data-muscle="' + m + '" data-picker="' + safePrefix + '"' +
+      (isOn ? " checked" : "") + '>' + m.replace(/_/g, " ") + '</label>';
+  }).join("");
+}
+
+function pickerValues(container) {
+  return Array.from(container.querySelectorAll("input[type=checkbox]"))
+    .filter(function(cb) { return cb.checked; })
+    .map(function(cb) { return cb.getAttribute("data-muscle"); });
+}
+
+function renderUnmapped() {
+  const box = document.getElementById("ex-unmapped");
+  if (!box) return 0;
+  // Distinct unrecognized exercise names from the parsed log, with counts.
+  // Keep the casing of the first occurrence for display.
+  const counts = {};   // lower → count
+  const display = {};  // lower → first-seen raw casing
+  if (cachedResult) {
+    for (const wd of cachedResult.days) {
+      for (const raw of (wd.unrecognized || [])) {
+        const lo = raw.toLowerCase();
+        counts[lo] = (counts[lo] || 0) + 1;
+        if (!display[lo]) display[lo] = raw;
+      }
+    }
+  }
+  const names = Object.keys(counts).sort(function(a, b) { return counts[b] - counts[a]; });
+  if (names.length === 0) { box.innerHTML = ""; return 0; }
+
+  box.innerHTML =
+    '<div class="ex-unmapped-box">' +
+    '<div class="ex-unmapped-title">⚠ ' + names.length +
+    ' unmapped exercise' + (names.length === 1 ? '' : 's') +
+    ' — not counted toward any muscle</div>' +
+    names.map(function(lo) {
+      const raw = display[lo];
+      return '<div class="ex-row">' +
+        '<span class="ex-name">' + escapeHtml(raw) + '</span>' +
+        '<span class="ex-muscles">' + counts[lo] + '×in log</span>' +
+        '<button class="ex-edit-btn" data-map="' + escapeHtml(raw) + '">map</button>' +
+        '<div class="ex-editor" style="display:none"></div>' +
+        '</div>';
+    }).join("") +
+    '</div>';
+
+  box.querySelectorAll("[data-map]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      const raw = btn.getAttribute("data-map");
+      const ed = btn.parentElement.querySelector(".ex-editor");
+      if (ed.style.display !== "none") { ed.style.display = "none"; return; }
+      ed.innerHTML =
+        '<div class="ex-muscle-picks">' + musclePickerHtml("map", []) + '</div>' +
+        '<div class="controls">' +
+        '<button class="ex-edit-btn" data-map-save="1">save</button>' +
+        '<span class="status-msg"></span>' +
+        '</div>';
+      ed.style.display = "";
+      wireCheckboxHighlight(ed);
+      ed.querySelector("[data-map-save]").addEventListener("click", function() {
+        const muscles = pickerValues(ed);
+        const st = ed.querySelector(".status-msg");
+        if (muscles.length === 0) {
+          st.textContent = "pick at least one muscle"; st.className = "status-msg err";
+          return;
+        }
+        const key = _basicNormalize(raw).replace(/ /g, "_");
+        USER_CONFIG.exercises[key] = { name: raw, variants: [], muscles: muscles };
+        saveConfig();  // re-parses → row disappears from unmapped on re-render
+      });
+    });
+  });
+  return names.length;
+}
+
+function renderExerciseManager() {
+  const listEl = document.getElementById("ex-list");
+  if (!listEl) return;
+  const unmappedCount = renderUnmapped();
+  const keys = allCanonicals();
+  document.getElementById("ex-count").textContent = keys.length + " exercises" +
+    (unmappedCount ? " · " + unmappedCount + " unmapped" : "");
+
+  // Which canonicals actually appear in the current log (shown first)
+  const inLog = new Set();
+  if (cachedResult) {
+    for (const wd of cachedResult.days) {
+      for (const l of wd.lifts) if (l.canonical_name) inLog.add(l.canonical_name);
+    }
+  }
+  keys.sort(function(a, b) {
+    const aIn = inLog.has(a) ? 0 : 1, bIn = inLog.has(b) ? 0 : 1;
+    return aIn !== bIn ? aIn - bIn : a.localeCompare(b);
+  });
+
+  listEl.innerHTML = keys.map(function(k) {
+    const isCustom = !!USER_CONFIG.exercises[k];
+    const muscles = musclesFor(k).map(function(m) { return m.replace(/_/g, " "); }).join(", ");
+    const ek = escapeHtml(k);
+    return '<div class="ex-row" data-ex="' + ek + '">' +
+      '<span class="ex-name' + (isCustom ? " custom" : "") + '">' + escapeHtml(k.replace(/_/g, " ")) + '</span>' +
+      '<span class="ex-muscles">' + escapeHtml(muscles || "(no muscles)") + '</span>' +
+      '<button class="ex-edit-btn" data-edit="' + ek + '">edit</button>' +
+      '<div class="ex-editor" style="display:none"></div>' +
+      '</div>';
+  }).join("");
+
+  listEl.querySelectorAll("[data-edit]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      const k = btn.getAttribute("data-edit");
+      const ed = btn.parentElement.querySelector(".ex-editor");
+      if (ed.style.display !== "none") { ed.style.display = "none"; return; }
+      const isCustom = !!USER_CONFIG.exercises[k];
+      const ek = escapeHtml(k);
+      ed.innerHTML =
+        '<div class="ex-muscle-picks">' + musclePickerHtml("edit-" + ek, musclesFor(k)) + '</div>' +
+        '<div class="controls">' +
+        '<button class="ex-edit-btn" data-save="' + ek + '">save</button>' +
+        (isCustom ? '<button class="ex-edit-btn" data-del="' + ek + '">delete</button>' : '') +
+        '</div>';
+      ed.style.display = "";
+      wireCheckboxHighlight(ed);
+      ed.querySelector("[data-save]").addEventListener("click", function() {
+        const muscles = pickerValues(ed);
+        if (muscles.length === 0) return;
+        if (USER_CONFIG.exercises[k]) {
+          USER_CONFIG.exercises[k].muscles = muscles;
+        } else {
+          USER_CONFIG.muscle_overrides[k] = muscles;
+        }
+        saveConfig();
+      });
+      const delBtn = ed.querySelector("[data-del]");
+      if (delBtn) delBtn.addEventListener("click", function() {
+        delete USER_CONFIG.exercises[k];
+        saveConfig();
+      });
+    });
+  });
+}
+
+function wireCheckboxHighlight(scope) {
+  scope.querySelectorAll(".ex-muscle-picks input").forEach(function(cb) {
+    cb.addEventListener("change", function() {
+      cb.parentElement.classList.toggle("checked", cb.checked);
+    });
+  });
+}
+
+function renderCardioList() {
+  const el = document.getElementById("ex-cardio-list");
+  if (!el) return;
+  const builtins = Array.from(CARDIO_WHITELIST).concat(CARDIO_PHRASES).sort();
+  const custom = (USER_CONFIG.cardio || []).slice().sort();
+  el.innerHTML =
+    builtins.map(function(c) {
+      return '<span class="cardio-chip">' + escapeHtml(c) + '</span>';
+    }).join("") +
+    custom.map(function(c) {
+      return '<span class="cardio-chip custom">' + escapeHtml(c) +
+        '<button data-del-cardio="' + escapeHtml(c) + '" title="remove">×</button></span>';
+    }).join("");
+  el.querySelectorAll("[data-del-cardio]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      const c = btn.getAttribute("data-del-cardio");
+      USER_CONFIG.cardio = (USER_CONFIG.cardio || []).filter(function(x) { return x !== c; });
+      saveConfig();
+      renderCardioList();
+    });
+  });
+}
+
+function addCardioType() {
+  const input = document.getElementById("ex-new-cardio");
+  const st = document.getElementById("ex-cardio-status");
+  const val = input.value.toLowerCase().trim().replace(/[^a-z ]/g, "");
+  if (!val) { st.textContent = "enter a name"; st.className = "status-msg err"; return; }
+  if (CARDIO_WHITELIST.has(val) || CARDIO_PHRASES.indexOf(val) !== -1 ||
+      (USER_CONFIG.cardio || []).indexOf(val) !== -1) {
+    st.textContent = "already exists"; st.className = "status-msg err"; return;
+  }
+  if (!USER_CONFIG.cardio) USER_CONFIG.cardio = [];
+  USER_CONFIG.cardio.push(val);
+  saveConfig();
+  input.value = "";
+  st.textContent = "added ✓"; st.className = "status-msg";
+  renderCardioList();
+}
+
+function addExercise() {
+  const name = document.getElementById("ex-new-name").value.trim();
+  const variantsRaw = document.getElementById("ex-new-variants").value.trim();
+  const muscles = pickerValues(document.getElementById("ex-new-muscles"));
+  const st = document.getElementById("ex-add-status");
+  if (!name) { st.textContent = "enter a name"; st.className = "status-msg err"; return; }
+  if (muscles.length === 0) { st.textContent = "pick at least one muscle"; st.className = "status-msg err"; return; }
+  const key = _basicNormalize(name).replace(/ /g, "_");
+  const variants = variantsRaw ? variantsRaw.split(",").map(function(v) { return v.trim(); }).filter(Boolean) : [];
+  USER_CONFIG.exercises[key] = { name: name, variants: variants, muscles: muscles };
+  saveConfig();
+  document.getElementById("ex-new-name").value = "";
+  document.getElementById("ex-new-variants").value = "";
+  st.textContent = "added ✓"; st.className = "status-msg";
+  // Reset the picker
+  const picker = document.getElementById("ex-new-muscles");
+  picker.innerHTML = musclePickerHtml("new", []);
+  wireCheckboxHighlight(picker.parentElement);
+}
+
+// Init
+(function init() {
+  const yearInput = document.getElementById("year-input");
+  const logText = document.getElementById("log-text");
+  const windowSlider = document.getElementById("window-slider");
+  const windowSliderVal = document.getElementById("window-slider-val");
+
+  // Default: current year - 1 (logs typically span a year boundary)
+  yearInput.value = String(new Date().getFullYear() - 1);
+
+  // Load user config BEFORE first parse (affects normalization)
+  loadConfig();
+
+  // Restore from localStorage
+  let savedLog = null, savedYear = null, savedWindow = null;
+  try {
+    savedLog = localStorage.getItem(LS_LOG_KEY);
+    savedYear = localStorage.getItem(LS_YEAR_KEY);
+    savedWindow = localStorage.getItem(LS_WINDOW_KEY);
+  } catch (e) {}
+
+  if (savedYear) yearInput.value = savedYear;
+  if (savedWindow && windowSlider) {
+    windowSlider.value = savedWindow;
+    windowSliderVal.textContent = savedWindow + " days";
+  }
+  if (savedLog) {
+    logText.value = savedLog;
+    render();
+  } else {
+    document.getElementById("full-log-panel").open = true;
+  }
+
+  // Live character counter so you can see if paste landed
+  function updateCharCount() {
+    var n = logText.value.length;
+    var el = document.getElementById("char-count");
+    el.textContent = n + " characters";
+    if (n > 0) el.classList.add("has-content");
+    else el.classList.remove("has-content");
+  }
+  logText.addEventListener("input", updateCharCount);
+  logText.addEventListener("paste", function() { setTimeout(updateCharCount, 0); });
+  updateCharCount();
+
+  // Window slider — re-render summary on change (uses cached parse result)
+  if (windowSlider) {
+    var sliderDebounce = null;
+    windowSlider.addEventListener("input", function() {
+      windowSliderVal.textContent = windowSlider.value + " days";
+      if (sliderDebounce) clearTimeout(sliderDebounce);
+      sliderDebounce = setTimeout(function() {
+        if (cachedResult) render();
+      }, 150);
+    });
+  }
+
+  document.getElementById("render-btn").addEventListener("click", function() {
+    render();
+    markDirtyAndSync();
+  });
+  document.getElementById("clear-btn").addEventListener("click", clearData);
+
+  // Quick-add: default date = today
+  const qaDate = document.getElementById("qa-date");
+  const now = new Date();
+  qaDate.value = now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0");
+  document.getElementById("qa-save").addEventListener("click", addWorkout);
+
+  // Exercise manager: add-exercise picker
+  const newPicker = document.getElementById("ex-new-muscles");
+  if (newPicker) {
+    newPicker.innerHTML = musclePickerHtml("new", []);
+    wireCheckboxHighlight(newPicker.parentElement);
+    document.getElementById("ex-add-btn").addEventListener("click", addExercise);
+  }
+  document.getElementById("ex-cardio-add-btn").addEventListener("click", addCardioType);
+  renderCardioList();
+
+  // Sync panel
+  const savedToken = localStorage.getItem(LS_TOKEN_KEY);
+  const savedGistId = localStorage.getItem(LS_GISTID_KEY);
+  if (savedToken) document.getElementById("sync-token").value = savedToken;
+  if (savedGistId) document.getElementById("sync-gist-id").value = savedGistId;
+  document.getElementById("sync-connect").addEventListener("click", connectSync);
+  document.getElementById("sync-now").addEventListener("click", function() {
+    if (localStorage.getItem(LS_DIRTY_KEY)) pushToGist(); else pullFromGist();
+  });
+  document.getElementById("sync-disconnect").addEventListener("click", disconnectSync);
+
+  // Auto-sync on load: push unsynced local changes, otherwise pull latest
+  if (savedToken && savedGistId) {
+    syncStatus("");
+    if (localStorage.getItem(LS_DIRTY_KEY)) pushToGist();
+    else pullFromGist();
+  }
+
+  // Offline cache: after first load the app opens instantly from device
+  // cache (gym basements welcome); updates apply on the following open.
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("./sw.js").catch(function() {});
+  }
+})();
+</script>
+</body>
+</html>
