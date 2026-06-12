@@ -635,6 +635,13 @@ const CANONICAL_TABLE = {
   "side lateral machine":       "machine_side_lateral",
   "machine side lateral":       "machine_side_lateral",
   "machine side lateral raise": "machine_side_lateral",
+  "machine side laterals raise": "machine_side_lateral",
+  "triceps machine":            "tricep_machine",
+  "cable pulldown":             "pulldown",
+  "reverse dumbbell fly":       "rear_delt_fly",
+  "machine chest press":        "machine_press",
+  "cable chest fly":            "chest_fly",
+  "dumbbell romanian deadlift": "romanian_deadlift",
   "pulldown":                 "pulldown",
   "pull down":                "pulldown",
   "pulldown machine":         "pulldown",
@@ -867,7 +874,7 @@ function rebuildUserCardio() {
   }
 }
 
-const TIMED_CARDIO_RE = /^([A-Za-z]+)\s*:\s*(\d+)\s*(min|mins|minute|minutes)$/i;
+const TIMED_CARDIO_RE = /^([A-Za-z][A-Za-z ]*?)\s*:\s*(\d+)\s*(min|mins|minute|minutes|hour|hours|hr|hrs)$/i;
 const PER_SIDE_RE = /^(\d+(?:\.\d+)?)\s*(lbs?)?\s+per\s+side\s*:\s*(.+)$/i;
 const LIFT_HEADER_RE = /^([^:]+):\s*(\d+)\s*(?:sets?)?:?(?:\s.*)?$/;
 const LIFT_HEADER_ALT_RE = /^([A-Za-z][A-Za-z\s-]*?)\s+(\d+)\s+sets?\b.*$/;
@@ -920,13 +927,23 @@ function _trySingleWordCardio(line) {
   return null;
 }
 
+// "Incline walk", "stair master" etc. count as cardio if the full name is a
+// known phrase or any word of it is a known cardio word.
+function _isCardioName(name) {
+  const lower = name.toLowerCase().trim();
+  if (USER_CARDIO_PHRASES.indexOf(lower) !== -1 || CARDIO_PHRASES.indexOf(lower) !== -1) return true;
+  return lower.split(/\s+/).some(function(w) {
+    return CARDIO_WHITELIST.has(w) || USER_CARDIO_WORDS.has(w);
+  });
+}
+
 function _tryTimedCardio(line) {
   const m = TIMED_CARDIO_RE.exec(line);
   if (!m) return null;
-  const word = m[1];
-  const wl = word.toLowerCase();
-  if (!CARDIO_WHITELIST.has(wl) && !USER_CARDIO_WORDS.has(wl)) return null;
-  return { raw_name: word, duration_minutes: parseInt(m[2], 10) };
+  if (!_isCardioName(m[1])) return null;
+  let mins = parseInt(m[2], 10);
+  if (/^h/i.test(m[3])) mins *= 60;
+  return { raw_name: m[1], duration_minutes: mins };
 }
 
 function _tryPerSide(line) {
@@ -1114,6 +1131,12 @@ function parseLog(text, defaultYear) {
       flushPendingNoDetails();
       const [rawName, declaredSets] = lh;
       const canonical = normalize(rawName);
+      // Cardio-named lines ("Swim: 30", "Incline walk: 20 minutes") are
+      // cardio sessions, never lifts — the number is duration, not sets.
+      if (canonical === null && _isCardioName(rawName)) {
+        current.cardio.push({ raw_name: rawName, duration_minutes: declaredSets });
+        continue;
+      }
       pendingLift = [rawName, declaredSets, canonical];
       continue;
     }
