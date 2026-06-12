@@ -1901,9 +1901,12 @@ function renderDashboard(data) {
       const [yr, mo] = mk.split("-");
       const monthName = new Date(yr, parseInt(mo, 10) - 1, 1)
         .toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      const liftD = days.filter(function(d) { return d.lifts.length > 0; }).length;
+      const cardioOnly = days.length - liftD;
       parts.push(
         '<details class="log-month"><summary>' + escapeHtml(monthName) +
-        ' <span class="month-count">' + days.length + ' workouts</span></summary>'
+        ' <span class="month-count">' + liftD + ' workouts' +
+        (cardioOnly > 0 ? ' · ' + cardioOnly + ' cardio' : '') + '</span></summary>'
       );
       for (const d of days) {
         parts.push('<div class="log-day">');
@@ -1945,8 +1948,12 @@ function renderDashboard(data) {
       parts.push('</details>');
     }
     document.getElementById("log-viewer-body").innerHTML = parts.join("");
+    const totalLiftDays = data.days.filter(function(d) { return d.lifts.length > 0; }).length;
+    const totalCardioOnly = data.days.length - totalLiftDays;
     document.getElementById("log-viewer-count").textContent =
-      data.days.length + " workouts in " + monthKeys.length + " months";
+      totalLiftDays + " workouts" +
+      (totalCardioOnly > 0 ? " · " + totalCardioOnly + " cardio" : "") +
+      " in " + monthKeys.length + " months";
   })();
 
   // --- Warnings ---
