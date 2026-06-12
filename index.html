@@ -1410,10 +1410,10 @@ function computeStats(result, windowDays) {
   const windowResult = { days: windowDaysIn, warnings: [] };
 
   const weeks = aggregateVolume(windowResult);
-  // Only weeks with at least one lifted set count toward averages —
-  // a cardio-only week shouldn't drag down sets/week or days/week.
-  const liftWeeks = weeks.filter(w => w.total_sets > 0);
-  const nWeeks = Math.max(1, liftWeeks.length);
+  // Divide by the window's actual time span, not the count of ISO weeks it
+  // touches — partial edge weeks would otherwise count as full weeks and
+  // dilute the averages (badly, on short windows).
+  const nWeeks = Math.max(1 / 7, (last.epochDay - windowStartEd + 1) / 7);
 
   const windowTotalSets = weeks.reduce((s, w) => s + w.total_sets, 0);
   const avgSetsPerWeek = windowTotalSets / nWeeks;
@@ -1626,7 +1626,7 @@ function renderDashboard(data) {
 
   document.getElementById("window-label").textContent =
     "averages over " + fmtDate(st.window_range[0]) + " \u2013 " + fmtDate(st.window_range[1]) +
-    " (" + st.total_weeks + " weeks)";
+    " (" + (Math.round(st.total_weeks * 10) / 10) + " weeks)";
 
   // --- Summary cards ---
   const cards = [
