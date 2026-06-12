@@ -432,6 +432,21 @@
     body.web1 .w1-flames { font-size: 1.2em; letter-spacing: 2px;
                    animation: w1flicker 0.4s steps(2) infinite; }
     @keyframes w1flicker { 50% { opacity: 0.75; transform: scaleY(1.08); } }
+    body.web1 .w1-flex { font-size: 0.8em; margin: 0 10px;
+                   animation: w1pump 0.8s ease-in-out infinite; }
+    body.web1 .w1-flex-r { transform: scaleX(-1); animation-name: w1pump-r; }
+    @keyframes w1pump { 50% { transform: scale(1.35) rotate(-12deg); } }
+    @keyframes w1pump-r { 0%, 100% { transform: scaleX(-1); }
+                          50% { transform: scaleX(-1.35) scaleY(1.35) rotate(12deg); } }
+    body.web1 .w1-lifter-track { display: block; position: relative; height: 2.2em;
+                   overflow: hidden; margin-bottom: 6px; }
+    body.web1 .w1-lifter { position: absolute; left: 0; top: 0; font-size: 1.8em;
+                   animation: w1pace 9s linear infinite; }
+    @keyframes w1pace { 0% { left: 0; transform: scaleX(1); }
+                        49% { left: calc(100% - 2em); transform: scaleX(1); }
+                        50% { left: calc(100% - 2em); transform: scaleX(-1); }
+                        99% { left: 0; transform: scaleX(-1); }
+                        100% { left: 0; transform: scaleX(1); } }
     body.web1 .w1-blink, body.web1 .pr-callout { animation: w1blink 0.9s steps(1) infinite; }
     @keyframes w1blink { 50% { visibility: hidden; } }
     body.web1 .hm-cell.l1 { background: #004400; } body.web1 .hm-cell.l2 { background: #008800; }
@@ -441,7 +456,7 @@
 <body>
   <div id="w1-marquee"><span>★彡 WELCOME TO MIKE'S IRON PALACE 彡★ &nbsp; 💪 NO PAIN NO GAIN 💪 &nbsp; ~*~ EsTaBLiSHeD 2025 ~*~ &nbsp; 🔥 SiCK GaiNZ iNSiDE 🔥 &nbsp; ⛓️ LiFT HeaVY oR Go HoMe ⛓️ &nbsp;</span></div>
   <header>
-    <h1>TRAINING<span class="accent">LOG</span><span class="w1-only w1-new">NEW!</span></h1>
+    <h1><span class="w1-only w1-flex">💪</span>TRAINING<span class="accent">LOG</span><span class="w1-only w1-flex w1-flex-r">💪</span><span class="w1-only w1-new">NEW!</span></h1>
     <div class="w1-only w1-flames">🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥</div>
     <p class="subtitle" id="subtitle">paste your log below to get started</p>
     <div id="w1-counter"></div>
@@ -597,6 +612,7 @@
   <div id="empty-state">No data yet — tap the textarea above and paste your log.</div>
 
   <div id="w1-footer">
+    <div class="w1-lifter-track"><span class="w1-lifter">🏋️</span></div>
     <div class="w1-construction"><span class="w1-digger">👷</span> <span>🚧 UNDER CONSTRUCTION 🚧</span> <span class="w1-digger">⛏️</span></div>
     <div class="w1-badges">
       <span class="w1-badge">Best viewed in<br>NETSCAPE NAVIGATOR 4.0</span>
