@@ -355,12 +355,92 @@
                         to   { opacity: 1; transform: translateY(0); } }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-12px); }
                            to   { opacity: 1; transform: translateY(0); } }
+    /* ---- Web 1.0 / GeoCities mode ---- */
+    #w1-marquee, #w1-footer, #w1-counter, .w1-only { display: none; }
+    body.web1 .w1-only { display: inline-block; }
+    #web1-toggle { position: absolute; top: 0; right: 0; background: none;
+                   border: none; font-size: 1.1em; cursor: pointer; opacity: 0.5; }
+    #web1-toggle:hover { opacity: 1; }
+    header { position: relative; }
+
+    body.web1 { background: #000 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23000022' width='160' height='160'/%3E%3Ccircle cx='20' cy='30' r='1' fill='white'/%3E%3Ccircle cx='75' cy='12' r='1.5' fill='white'/%3E%3Ccircle cx='130' cy='45' r='1' fill='%23ffff99'/%3E%3Ccircle cx='50' cy='90' r='1' fill='white'/%3E%3Ccircle cx='110' cy='105' r='1.5' fill='%2399ccff'/%3E%3Ccircle cx='28' cy='140' r='1' fill='white'/%3E%3Ccircle cx='150' cy='130' r='1' fill='white'/%3E%3Ccircle cx='90' cy='65' r='2' fill='%23ffffcc'/%3E%3C/svg%3E") repeat;
+                font-family: "Comic Sans MS", "Comic Sans", cursive; }
+    body.web1 * { font-family: "Comic Sans MS", "Comic Sans", cursive !important; }
+    body.web1 h1 { color: #ff0; text-shadow: 3px 3px 0 #f0f, 6px 6px 0 #00f;
+                   font-style: italic; }
+    body.web1 h1 .accent { color: #0f0; }
+    body.web1 h2 { color: #fff; background: linear-gradient(90deg, #f00, #ff8000, #ff0, #0f0, #0ff, #00f, #f0f);
+                   border: 3px ridge #c0c0c0; padding: 4px 10px; font-weight: bold;
+                   text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000; }
+    body.web1 h2 .h2-meta { color: #ff0; background: #000; padding: 1px 6px;
+                   text-shadow: none; }
+    body.web1 .subtitle { color: #0ff; }
+    body.web1 section, body.web1 .tool-panel, body.web1 .chart, body.web1 .card,
+    body.web1 .panel, body.web1 .ex-panel { background: #2a0a4a;
+                   border: 4px outset #c0c0c0; border-radius: 0; }
+    body.web1 button, body.web1 select, body.web1 input, body.web1 textarea {
+                   background: #c0c0c0; color: #000; border: 3px outset #fff;
+                   border-radius: 0; }
+    body.web1 button:active { border-style: inset; }
+    body.web1 a, body.web1 u { color: #00f; }
+    body.web1 #w1-marquee { display: block; overflow: hidden; white-space: nowrap;
+                   background: #000; color: #0f0; border: 3px ridge #c0c0c0;
+                   font-weight: bold; padding: 4px 0; margin: 0 calc(50% - 50vw) 12px;
+                   width: 100vw; }
+    body.web1 .card, body.web1 .muscle-chip, body.web1 .spark-cell,
+    body.web1 details summary, body.web1 .log-month > summary,
+    body.web1 .ex-row { background: #000033; border: 3px outset #c0c0c0;
+                   border-radius: 0; color: #ff0; }
+    body.web1 .card .value, body.web1 .muscle-chip .m-val { color: #0f0; }
+    body.web1 .card .label, body.web1 .muscle-chip .m-name { color: #0ff; }
+    body.web1 #w1-marquee span { display: inline-block; padding-left: 100%;
+                   animation: w1scroll 18s linear infinite; }
+    @keyframes w1scroll { to { transform: translateX(-100%); } }
+    body.web1 #w1-counter { display: block; margin-top: 8px;
+                   font-family: "Courier New", monospace !important;
+                   color: #0f0; background: #000; border: 2px inset #888;
+                   display: inline-block; padding: 2px 8px; letter-spacing: 3px; }
+    body.web1 #w1-footer { display: block; text-align: center; margin-top: 40px;
+                   padding: 16px; }
+    body.web1 .w1-construction { background: repeating-linear-gradient(45deg, #000, #000 12px, #ff0 12px, #ff0 24px);
+                   padding: 10px; border: 3px ridge #c0c0c0; }
+    body.web1 .w1-construction span { background: #000; color: #ff0;
+                   font-size: 1.4em; font-weight: bold; padding: 2px 14px;
+                   border: 2px outset #c0c0c0; display: inline-block; }
+    body.web1 .w1-digger { display: inline-block; animation: w1dig 0.6s ease-in-out infinite alternate; }
+    @keyframes w1dig { to { transform: translateY(-5px) rotate(-12deg); } }
+    body.web1 .w1-badges { margin: 12px 0; }
+    body.web1 .w1-badge { display: inline-block; width: 88px; height: 31px;
+                   box-sizing: border-box; background: #c0c0c0; color: #000;
+                   border: 2px outset #fff; font-size: 0.5em; font-weight: bold;
+                   padding: 2px; margin: 3px; text-align: center; vertical-align: middle; }
+    body.web1 .w1-guestbook { color: #0ff; margin: 8px 0; font-weight: bold; }
+    body.web1 .w1-guestbook a { color: #00f; background: #0ff; padding: 0 4px; }
+    body.web1 .w1-webring { color: #fff; margin: 10px 0; }
+    body.web1 .w1-webring a { color: #ff0; font-weight: bold; }
+    body.web1 .w1-midi { color: #f0f; font-size: 0.8em; }
+    body.web1 .w1-new { display: inline-block; background: #f00; color: #ff0;
+                   font-size: 0.4em; font-weight: bold; padding: 4px;
+                   border-radius: 50%; vertical-align: super;
+                   animation: w1spin 2s linear infinite; }
+    @keyframes w1spin { to { transform: rotate(360deg); } }
+    body.web1 .w1-flames { font-size: 1.2em; letter-spacing: 2px;
+                   animation: w1flicker 0.4s steps(2) infinite; }
+    @keyframes w1flicker { 50% { opacity: 0.75; transform: scaleY(1.08); } }
+    body.web1 .w1-blink, body.web1 .pr-callout { animation: w1blink 0.9s steps(1) infinite; }
+    @keyframes w1blink { 50% { visibility: hidden; } }
+    body.web1 .hm-cell.l1 { background: #004400; } body.web1 .hm-cell.l2 { background: #008800; }
+    body.web1 .hm-cell.l3 { background: #00cc00; } body.web1 .hm-cell.l4 { background: #00ff00; }
   </style>
 </head>
 <body>
+  <div id="w1-marquee"><span>★彡 WELCOME TO MIKE'S IRON PALACE 彡★ &nbsp; 💪 NO PAIN NO GAIN 💪 &nbsp; ~*~ EsTaBLiSHeD 2025 ~*~ &nbsp; 🔥 SiCK GaiNZ iNSiDE 🔥 &nbsp; ⛓️ LiFT HeaVY oR Go HoMe ⛓️ &nbsp;</span></div>
   <header>
-    <h1>TRAINING<span class="accent">LOG</span></h1>
+    <h1>TRAINING<span class="accent">LOG</span><span class="w1-only w1-new">NEW!</span></h1>
+    <div class="w1-only w1-flames">🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥</div>
     <p class="subtitle" id="subtitle">paste your log below to get started</p>
+    <div id="w1-counter"></div>
+    <button id="web1-toggle" title="Web 1.0 mode">🌐</button>
   </header>
 
   <details class="tool-panel" id="quick-add">
@@ -510,6 +590,19 @@
 
 
   <div id="empty-state">No data yet — tap the textarea above and paste your log.</div>
+
+  <div id="w1-footer">
+    <div class="w1-construction"><span class="w1-digger">👷</span> <span>🚧 UNDER CONSTRUCTION 🚧</span> <span class="w1-digger">⛏️</span></div>
+    <div class="w1-badges">
+      <span class="w1-badge">Best viewed in<br>NETSCAPE NAVIGATOR 4.0</span>
+      <span class="w1-badge">800 × 600<br>RESOLUTION</span>
+      <span class="w1-badge w1-blink">♨️ HoT PaGe ♨️</span>
+      <span class="w1-badge">GeoCities<br>FITNESS RING</span>
+    </div>
+    <div class="w1-guestbook">📖 <a href="mailto:webmaster@ironpalace.example?subject=SIGN%20MY%20GUESTBOOK">SIGN MY GUESTBOOK!!!</a> 📖 &nbsp;|&nbsp; 📧 <a href="mailto:webmaster@ironpalace.example">EMAIL ME</a></div>
+    <div class="w1-webring">— IRON PALACE WebRing — [ <a href="#" onclick="return false">&lt;&lt; Prev</a> | <a href="#" onclick="return false">Random</a> | <a href="#" onclick="return false">Next &gt;&gt;</a> ] —</div>
+    <div class="w1-midi">🎵 now playing: eye_of_the_tiger.mid 🎵</div>
+  </div>
 
 <script>
 "use strict";
@@ -1595,11 +1688,23 @@ function legendBottom() {
   };
 }
 
+function isWeb1() { return document.body.classList.contains("web1"); }
+
 function darkLayout(overrides) {
-  return Object.assign({}, DARK_LAYOUT, overrides, {
+  const base = Object.assign({}, DARK_LAYOUT, overrides, {
     xaxis: Object.assign({}, DARK_LAYOUT.xaxis, overrides.xaxis || {}),
     yaxis: Object.assign({}, DARK_LAYOUT.yaxis, overrides.yaxis || {}),
   });
+  if (isWeb1()) {
+    base.paper_bgcolor = "#2a0a4a";
+    base.plot_bgcolor = "#000022";
+    base.font = { family: "Comic Sans MS, cursive", color: "#00ff00" };
+    base.xaxis = Object.assign({}, base.xaxis, { gridcolor: "#004400", color: "#ffff00" });
+    base.yaxis = Object.assign({}, base.yaxis, { gridcolor: "#004400", color: "#ffff00" });
+    // serif fallback font is wider — rotated tick labels collide with axis titles
+    base.margin = Object.assign({}, base.margin, { b: ((base.margin && base.margin.b) || 50) + 25 });
+  }
+  return base;
 }
 
 function escapeHtml(s) {
@@ -1618,6 +1723,8 @@ function renderDashboard(data) {
   document.getElementById("dashboard").style.display = "";
   document.getElementById("empty-state").style.display = "none";
   renderHeatmap();
+  document.getElementById("w1-counter").textContent =
+    "You are visitor No. " + String(data.stats.total_sets).padStart(6, "0");
 
   const st = data.stats;
   document.getElementById("subtitle").textContent =
@@ -2750,6 +2857,14 @@ function addExercise() {
     if (localStorage.getItem(LS_DIRTY_KEY)) pushToGist();
     else pullFromGist();
   }
+
+  // Web 1.0 mode
+  if (localStorage.getItem("web1Mode") === "1") document.body.classList.add("web1");
+  document.getElementById("web1-toggle").addEventListener("click", function() {
+    const on = document.body.classList.toggle("web1");
+    try { localStorage.setItem("web1Mode", on ? "1" : "0"); } catch (e) {}
+    if (cachedResult) { cachedText = null; render(); }  // re-theme charts
+  });
 
   // Offline cache: after first load the app opens instantly from device
   // cache (gym basements welcome); updates apply on the following open.
