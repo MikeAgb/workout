@@ -365,7 +365,12 @@
 
     body.web1 { background: #000 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Crect fill='%23000022' width='160' height='160'/%3E%3Ccircle cx='20' cy='30' r='1' fill='white'/%3E%3Ccircle cx='75' cy='12' r='1.5' fill='white'/%3E%3Ccircle cx='130' cy='45' r='1' fill='%23ffff99'/%3E%3Ccircle cx='50' cy='90' r='1' fill='white'/%3E%3Ccircle cx='110' cy='105' r='1.5' fill='%2399ccff'/%3E%3Ccircle cx='28' cy='140' r='1' fill='white'/%3E%3Ccircle cx='150' cy='130' r='1' fill='white'/%3E%3Ccircle cx='90' cy='65' r='2' fill='%23ffffcc'/%3E%3C/svg%3E") repeat;
                 font-family: "Comic Sans MS", "Comic Sans", cursive; }
-    body.web1 * { font-family: "Comic Sans MS", "Comic Sans", cursive !important; }
+    body.web1 * { font-family: Verdana, Geneva, Tahoma, sans-serif !important; }
+    body.web1 h1, body.web1 h2, body.web1 #w1-marquee, body.web1 .w1-construction span,
+    body.web1 .w1-guestbook, body.web1 .w1-webring, body.web1 .w1-new {
+      font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", cursive !important; }
+    body.web1 #w1-counter, body.web1 .l-detail, body.web1 #qa-hint {
+      font-family: "Courier New", Courier, monospace !important; }
     body.web1 h1 { color: #ff0; text-shadow: 3px 3px 0 #f0f, 6px 6px 0 #00f;
                    font-style: italic; }
     body.web1 h1 .accent { color: #0f0; }
@@ -1660,6 +1665,24 @@ const MUSCLE_COLORS = {
   side_delts:  "#a8c454",
   abs:         "#6a7a4a",
 };
+// Excel 97 default-palette primaries for web1 mode
+const WEB1_MUSCLE_COLORS = {
+  chest:       "#ff0000",
+  front_delts: "#ff8000",
+  triceps:     "#ffff00",
+  back:        "#0000ff",
+  rear_delts:  "#00ffff",
+  biceps:      "#000080",
+  quads:       "#00ff00",
+  hamstrings:  "#008000",
+  glutes:      "#808000",
+  calves:      "#99cc00",
+  side_delts:  "#ff00ff",
+  abs:         "#808080",
+};
+function muscleColor(m) {
+  return (isWeb1() ? WEB1_MUSCLE_COLORS : MUSCLE_COLORS)[m] || "#7a8591";
+}
 const MUSCLE_STACK_ORDER = [
   "chest", "front_delts", "triceps",
   "back", "rear_delts", "biceps",
@@ -1696,13 +1719,17 @@ function darkLayout(overrides) {
     yaxis: Object.assign({}, DARK_LAYOUT.yaxis, overrides.yaxis || {}),
   });
   if (isWeb1()) {
-    base.paper_bgcolor = "#2a0a4a";
-    base.plot_bgcolor = "#000022";
-    base.font = { family: "Comic Sans MS, cursive", color: "#00ff00" };
-    base.xaxis = Object.assign({}, base.xaxis, { gridcolor: "#004400", color: "#ffff00" });
-    base.yaxis = Object.assign({}, base.yaxis, { gridcolor: "#004400", color: "#ffff00" });
-    // serif fallback font is wider — rotated tick labels collide with axis titles
+    // Excel 97 embedded-chart look: silver frame, gray plot, Arial, black axes
+    base.paper_bgcolor = "#c0c0c0";
+    base.plot_bgcolor = "#808080";
+    base.font = { family: "Arial, Helvetica, sans-serif", color: "#000000", size: 11 };
+    base.xaxis = Object.assign({}, base.xaxis, { gridcolor: "#000000", color: "#000000",
+      linecolor: "#000000", linewidth: 2, mirror: true });
+    base.yaxis = Object.assign({}, base.yaxis, { gridcolor: "#000000", color: "#000000",
+      linecolor: "#000000", linewidth: 2, mirror: true });
     base.margin = Object.assign({}, base.margin, { b: ((base.margin && base.margin.b) || 50) + 25 });
+    if (base.legend) base.legend = Object.assign({}, base.legend,
+      { bgcolor: "#ffffff", bordercolor: "#000000", borderwidth: 1, font: { color: "#000" } });
   }
   return base;
 }
@@ -1770,7 +1797,7 @@ function renderDashboard(data) {
     y: data.weekly.map(w => w.sets_by_muscle[muscle] || 0),
     name: muscle,
     type: "bar",
-    marker: { color: MUSCLE_COLORS[muscle] || undefined },
+    marker: { color: muscleColor(muscle), line: isWeb1() ? { color: "#000", width: 1 } : {} },
   }));
   weeklyTraces.push({
     x: weekLabels,
@@ -1778,8 +1805,9 @@ function renderDashboard(data) {
     name: "total",
     type: "scatter",
     mode: "lines+markers",
-    line: { color: "#c7f464", width: 2 },
-    marker: { size: 5, color: "#c7f464" },
+    line: { color: isWeb1() ? "#000080" : "#c7f464", width: isWeb1() ? 3 : 2 },
+    marker: { size: isWeb1() ? 7 : 5, color: isWeb1() ? "#000080" : "#c7f464",
+              symbol: isWeb1() ? "square" : "circle" },
   });
   Plotly.newPlot("weekly-chart", weeklyTraces, darkLayout({
     barmode: "stack",
@@ -1851,7 +1879,7 @@ function renderDashboard(data) {
   );
   const sparkGrid = document.getElementById("spark-grid");
   sparkGrid.innerHTML = sparkMuscles.map(m => {
-    const col = MUSCLE_COLORS[m] || "#7a8591";
+    const col = muscleColor(m);
     const ys = fullMonths.map(mo => mo.sets_by_muscle[m] || 0);
     const last = ys.length ? ys[ys.length - 1] : 0;
     return `<div class="spark-cell" style="--mc:${col}">` +
@@ -1860,7 +1888,7 @@ function renderDashboard(data) {
            `<div class="spark" id="spark-${escapeHtml(m)}"></div></div>`;
   }).join("");
   sparkMuscles.forEach(m => {
-    const col = MUSCLE_COLORS[m] || "#7a8591";
+    const col = muscleColor(m);
     Plotly.newPlot("spark-" + m, [{
       x: monthLabels,
       y: fullMonths.map(mo => mo.sets_by_muscle[m] || 0),
@@ -1891,7 +1919,8 @@ function renderDashboard(data) {
     x: monthLabels,
     y: fullMonths.map(m => m.avg_sessions_per_week),
     type: "bar",
-    marker: { color: "#c7f464" },
+    marker: { color: isWeb1() ? "#0000ff" : "#c7f464",
+              line: isWeb1() ? { color: "#000", width: 1 } : {} },
     hovertemplate: "%{x}<br>%{y:.1f} sessions/week<br>(%{customdata} days)<extra></extra>",
     customdata: fullMonths.map(m => m.workout_days),
   }], darkLayout({
@@ -1932,18 +1961,20 @@ function renderDashboard(data) {
     const trace = {
       x: xs, y: ys,
       mode: "lines+markers", type: "scatter", name: ex,
-      line: { color: "#c7f464", width: 2.5, shape: "spline" },
+      line: isWeb1() ? { color: "#000080", width: 3, shape: "linear" }
+                     : { color: "#c7f464", width: 2.5, shape: "spline" },
       fill: "tozeroy",
-      fillcolor: "rgba(199,244,100,0.08)",
-      marker: { size: 8, color: "#c7f464", line: { color: "#14181d", width: 2 } },
+      fillcolor: isWeb1() ? "rgba(0,0,128,0.25)" : "rgba(199,244,100,0.08)",
+      marker: isWeb1() ? { size: 8, color: "#ffff00", symbol: "square", line: { color: "#000", width: 1 } }
+                       : { size: 8, color: "#c7f464", line: { color: "#14181d", width: 2 } },
       customdata: setsList,
       hovertemplate: "%{x}<br>e1RM: %{y:.1f} lbs<br>lifted: %{customdata}<extra></extra>",
     };
     const prMarker = {
       x: [xs[maxIdx]], y: [maxVal],
       mode: "markers", type: "scatter",
-      marker: { size: 16, color: "#c7f464", symbol: "diamond",
-                line: { color: "#14181d", width: 2 } },
+      marker: isWeb1() ? { size: 16, color: "#ff0000", symbol: "star", line: { color: "#000", width: 1 } }
+                       : { size: 16, color: "#c7f464", symbol: "diamond", line: { color: "#14181d", width: 2 } },
       customdata: [setsList[maxIdx]],
       hovertemplate: "PR: %{y:.1f} lbs<br>lifted: %{customdata}<extra></extra>",
       showlegend: false,
