@@ -2652,6 +2652,11 @@ const WEB1_REGION_COLORS = { chest: "#ff0000", shoulders: "#ffff00", arms: "#00f
 // A retired lift's index stops carrying forward after this many days, so a
 // stale value can't prop up the composite forever.
 const IMPROVEMENT_CARRY_DAYS = 84;
+// Higher entry bar than the strength dropdown: newbie gains on a fresh lift
+// are steep, so a lift must prove it's a staple before joining the composite.
+const IMPROVEMENT_MIN_DATAPOINTS = 8;
+// Superlinear frequency weighting: 3x the sessions => ~6x the weight (3^1.6).
+const IMPROVEMENT_WEIGHT_EXP = 1.6;
 
 // Region by majority vote over the lift's mapped muscles (user-mapped muscle
 // lists are unordered checkbox output, so muscles[0] is not a chosen primary).
@@ -2679,7 +2684,7 @@ function computeImprovement(result) {
   const series = [];
   for (const ex of allNames) {
     const pts = aggregateStrength(result, ex);
-    if (pts.length < MIN_STRENGTH_DATAPOINTS) continue;
+    if (pts.length < IMPROVEMENT_MIN_DATAPOINTS) continue;
     // Median of first 3 sessions: the first point is the only one the outlier
     // filter never checks, so a plain first-N average is too easy to poison.
     const firstVals = pts.slice(0, 3).map(p => p.best_e1rm_lbs).sort((a, b) => a - b);
@@ -2709,7 +2714,7 @@ function computeImprovement(result) {
       idx = p.idx; n++; lastEd = p.ed;
     }
     if (idx === null || e - lastEd > IMPROVEMENT_CARRY_DAYS) return null;
-    return { idx: idx, n: n };
+    return { idx: idx, n: Math.pow(n, IMPROVEMENT_WEIGHT_EXP) };
   }
 
   const out = { x: [], overall: [], regions: {}, nLifts: series.length };
