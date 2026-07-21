@@ -530,6 +530,11 @@
         <div id="heatmap"></div>
       </div>
 
+      <h2>Overall Progress <span class="h2-meta">frequency-weighted e1RM index &middot; baseline = 100</span></h2>
+      <div class="chart chart-med" id="improvement-chart"></div>
+    </section>
+
+    <section>
       <h2>Strength Progression</h2>
       <div class="pr-callout" id="pr-callout"></div>
       <select id="exercise-select"></select>
@@ -1745,7 +1750,8 @@ function darkLayout(overrides) {
       linecolor: "#000000", linewidth: 2, mirror: true });
     base.margin = Object.assign({}, base.margin, { b: ((base.margin && base.margin.b) || 50) + 25 });
     if (base.legend) base.legend = Object.assign({}, base.legend,
-      { bgcolor: "#ffffff", bordercolor: "#000000", borderwidth: 1, font: { color: "#000" } });
+      { bgcolor: "#ffffff", bordercolor: "#000000", borderwidth: 1,
+        font: Object.assign({}, base.legend.font, { color: "#000" }) });
   }
   return base;
 }
@@ -1766,6 +1772,7 @@ function renderDashboard(data) {
   document.getElementById("dashboard").style.display = "";
   document.getElementById("empty-state").style.display = "none";
   renderHeatmap();
+  try { renderImprovement(); } catch (e) { console.error("improvement chart:", e); }
   document.getElementById("w1-counter").textContent =
     "You are visitor No. " + String(data.stats.total_sets).padStart(6, "0");
 
@@ -2622,6 +2629,152 @@ function renderExerciseManager() {
 
 const MONTH_ABBR = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// ---- Overall improvement index -------------------------------------------
+
+const REGION_OF = {
+  chest: "chest",
+  front_delts: "shoulders", side_delts: "shoulders", rear_delts: "shoulders",
+  biceps: "arms", triceps: "arms",
+  back: "back",
+  quads: "legs", hamstrings: "legs", glutes: "legs", calves: "legs",
+  abs: "core",
+};
+const REGION_ORDER = ["chest", "shoulders", "arms", "back", "legs", "core"];
+const REGION_COLORS = { chest: "#ff5c40", shoulders: "#f4b400", arms: "#6ccbdc",
+                        back: "#2e9bb8", legs: "#99c248", core: "#8a7ad9" };
+const WEB1_REGION_COLORS = { chest: "#ff0000", shoulders: "#ffff00", arms: "#00ffff",
+                             back: "#0000ff", legs: "#00ff00", core: "#ff00ff" };
+
+// Each trackable lift's e1RM series → index vs its own baseline (avg of first
+// two sessions = 100), so lifts on different weight scales compare as % gains.
+// Composite per week = frequency-weighted mean of each lift's latest index.
+// A retired lift's index stops carrying forward after this many days, so a
+// stale value can't prop up the composite forever.
+const IMPROVEMENT_CARRY_DAYS = 84;
+
+// Region by majority vote over the lift's mapped muscles (user-mapped muscle
+// lists are unordered checkbox output, so muscles[0] is not a chosen primary).
+function regionFor(muscles) {
+  const counts = {};
+  for (const m of muscles) {
+    const r = REGION_OF[m];
+    if (r) counts[r] = (counts[r] || 0) + 1;
+  }
+  let best = null, bestN = 0;
+  for (const r of REGION_ORDER) {
+    if ((counts[r] || 0) > bestN) { best = r; bestN = counts[r]; }
+  }
+  return best;
+}
+
+function computeImprovement(result) {
+  // Every lift with enough datapoints, WITHOUT the 45-day recency gate the
+  // strength dropdown uses: if a retired lift were excluded, its entire past
+  // contribution would vanish and the historical line would rewrite itself.
+  const allNames = new Set();
+  for (const wd of result.days) {
+    for (const l of wd.lifts) if (l.canonical_name) allNames.add(l.canonical_name);
+  }
+  const series = [];
+  for (const ex of allNames) {
+    const pts = aggregateStrength(result, ex);
+    if (pts.length < MIN_STRENGTH_DATAPOINTS) continue;
+    // Median of first 3 sessions: the first point is the only one the outlier
+    // filter never checks, so a plain first-N average is too easy to poison.
+    const firstVals = pts.slice(0, 3).map(p => p.best_e1rm_lbs).sort((a, b) => a - b);
+    const base = firstVals[1];
+    if (base <= 0) continue;
+    series.push({
+      ex: ex,
+      region: regionFor(musclesFor(ex)),
+      pts: pts.map(p => ({ ed: p.day.epochDay, idx: 100 * p.best_e1rm_lbs / base })),
+    });
+  }
+  if (series.length === 0) return null;
+
+  let minE = Infinity, maxE = -Infinity;
+  for (const sr of series) {
+    minE = Math.min(minE, sr.pts[0].ed);
+    maxE = Math.max(maxE, sr.pts[sr.pts.length - 1].ed);
+  }
+
+  // Latest index + datapoints-so-far at time e. Weighting by count-so-far
+  // (not the final total) keeps past buckets stable as new sessions arrive,
+  // and lets a new lift enter at weight 1 instead of its eventual weight.
+  function stateAt(sr, e) {
+    let idx = null, n = 0, lastEd = -Infinity;
+    for (const p of sr.pts) {
+      if (p.ed > e) break;
+      idx = p.idx; n++; lastEd = p.ed;
+    }
+    if (idx === null || e - lastEd > IMPROVEMENT_CARRY_DAYS) return null;
+    return { idx: idx, n: n };
+  }
+
+  const out = { x: [], overall: [], regions: {}, nLifts: series.length };
+  for (const r of REGION_ORDER) out.regions[r] = [];
+  for (let e = minE; e <= maxE + 6; e += 7) {
+    const ed = Math.min(e, maxE);
+    let num = 0, den = 0;
+    const rNum = {}, rDen = {};
+    for (const sr of series) {
+      const st = stateAt(sr, ed);
+      if (st === null) continue;
+      num += st.n * st.idx; den += st.n;
+      if (sr.region) {
+        rNum[sr.region] = (rNum[sr.region] || 0) + st.n * st.idx;
+        rDen[sr.region] = (rDen[sr.region] || 0) + st.n;
+      }
+    }
+    if (den > 0) {
+      out.x.push(dateFromEpochDay(ed).iso);
+      out.overall.push(num / den);
+      for (const r of REGION_ORDER) out.regions[r].push(rDen[r] ? rNum[r] / rDen[r] : null);
+    }
+    if (ed === maxE) break;
+  }
+  return out;
+}
+
+function renderImprovement() {
+  const el = document.getElementById("improvement-chart");
+  if (!el || !cachedResult) return;
+  const imp = computeImprovement(cachedResult);
+  if (!imp || imp.x.length < 2) {
+    if (el.data) Plotly.purge(el);
+    el.innerHTML = '<p class="empty">Not enough weight×reps history yet for an improvement index.</p>';
+    return;
+  }
+  const w1 = isWeb1();
+  const traces = [];
+  for (const r of REGION_ORDER) {
+    if (!imp.regions[r].some(v => v !== null)) continue;
+    traces.push({
+      x: imp.x, y: imp.regions[r],
+      mode: "lines", type: "scatter", name: r,
+      connectgaps: true,
+      line: { color: (w1 ? WEB1_REGION_COLORS : REGION_COLORS)[r], width: w1 ? 2 : 1.3 },
+      opacity: 0.65,
+      hovertemplate: r + ": %{y:.1f}<extra></extra>",
+    });
+  }
+  traces.push({
+    x: imp.x, y: imp.overall,
+    mode: "lines", type: "scatter", name: "overall",
+    line: w1 ? { color: "#000080", width: 4 } : { color: "#fff", width: 3 },
+    hovertemplate: "overall: %{y:.1f}<extra></extra>",
+  });
+  Plotly.newPlot("improvement-chart", traces, darkLayout({
+    xaxis: { title: { text: "" } },
+    yaxis: { title: { text: "STRENGTH INDEX" } },
+    margin: { t: 10, r: 10, b: 50, l: 55 },
+    showlegend: true,
+    legend: { orientation: "h", y: -0.18, font: { size: 10 } },
+    shapes: [{ type: "line", xref: "paper", x0: 0, x1: 1, yref: "y", y0: 100, y1: 100,
+               line: { color: w1 ? "#000" : "#4a5560", width: 1, dash: "dot" } }],
+  }), PLOT_CFG);
+}
 
 function renderHeatmap() {
   const grid = document.getElementById("heatmap");
